@@ -1,0 +1,40 @@
+---
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: billing-system
+  namespace: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: billing
+  template:
+    metadata:
+      labels:
+        app: billing
+    spec:
+      containers:
+        - name: billing
+          image: busybox
+          command:
+            - /bin/sh
+            - '-c'
+          args:
+            - |
+              while true; do
+                case $((RANDOM % 6)) in
+                  0) echo "backup completed" ;;
+                  1) echo "security breach occurred. user tried to log in from outside of business hours" ;;
+                  2) echo "RAID array experienced disk crash" ;;
+                  3) 
+                    ips="192.168.1.10 10.2.4.5 172.135.223.12 192.168.220.110"
+                    set -- $ips
+                    random_ip=$(eval echo \$$((RANDOM % 4 + 1)))
+                    echo "suspicious activity observed from ip $random_ip" ;;
+                  4) echo "invoice generated successfully" ;;
+                  5) echo "application is up and running within acceptable parameters" ;;
+                esac
+                sleep 10
+              done
+

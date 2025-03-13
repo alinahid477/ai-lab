@@ -1,0 +1,7 @@
+*.nogit.*
+*.nogit
+
+myenv/
+training/ssl/
+test/
+models/

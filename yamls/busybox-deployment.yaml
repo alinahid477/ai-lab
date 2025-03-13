@@ -1,0 +1,33 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: busybox-deployment
+  namespace: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busybox
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: busybox
+    spec:
+      containers:
+        - name: busybox
+          image: busybox
+          command:
+            - /bin/sh
+            - '-c'
+          args:
+            - |
+              while true; do
+                if [ $((RANDOM % 2)) -eq 0 ]; then
+                  echo "I am busybox. I have just faced an issue..." >&2
+                else
+                  echo "I am busybox. Running normally.."
+                fi
+                sleep 30
+              done
+
