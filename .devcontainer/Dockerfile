@@ -8,7 +8,7 @@ RUN apt-get install -y python3-pip
 RUN ln -s /usr/bin/python3 /usr/bin/python
 RUN apt install -y python3.11-venv
 RUN python --version
-RUN curl -fsSL https://ollama.com/install.sh | sh
+# RUN curl -fsSL https://ollama.com/install.sh | sh
 
 
 RUN apt-get update && apt-get install git -y
