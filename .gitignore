@@ -5,3 +5,5 @@ myenv/
 training/ssl/
 test/
 models/
+
+.env
