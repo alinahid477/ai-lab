@@ -17,3 +17,4 @@ ipykernel==6.29.5
 python-dotenv==1.0.1
 skl2onnx==1.18.0
 onnxruntime==1.21.0
+websockets==15.0.1
