@@ -1,3 +1,14 @@
+
+
+## Links
+
+https://www.youtube.com/watch?v=Yz3Rfn_UJOo
+
+https://medium.com/@elanaolson/a-beginners-guide-to-building-a-react-nextjs-app-7463120389f0
+
+
+## NextJS default 
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
