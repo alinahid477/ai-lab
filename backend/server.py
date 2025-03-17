@@ -2,18 +2,30 @@ import pandas as pd
 from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.responses import FileResponse
 
+
+
+
+
 from backend.classification import classify
+
+from backend.kafka_extractor import extract_kafka_logs
 
 app = FastAPI()
 
-@app.post("/classify/")
-async def classify_logs(file: UploadFile):
-    if not file.filename.endswith('.csv'):
-        raise HTTPException(status_code=400, detail="File must be a CSV.")
+
+async def get_logs_from_kafka(duration):
+    if duration != 12 or duration != 24 or duration != 48:
+        raise HTTPException(status_code=400, detail="Duration must be 12, 24, or 48 hours.")
     
+    csv_file = extract_kafka_logs(duration)
+    
+    
+
+@app.post("/classify/")
+async def classify_logs(csv_file_path):
     try:
         # Read the uploaded CSV
-        df = pd.read_csv(file.file)
+        df = pd.read_csv(csv_file_path)
         if "app_name" not in df.columns or "message" not in df.columns:
             raise HTTPException(status_code=400, detail="CSV must contain 'source' and 'message' columns.")
 
@@ -30,7 +42,7 @@ async def classify_logs(file: UploadFile):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
-        file.file.close()
+        print("Processed classifying logs")
         # # Clean up if the file was saved
         # if os.path.exists("output.csv"):
         #     os.remove("output.csv")

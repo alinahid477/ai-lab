@@ -1,25 +1,38 @@
-from processor_bert import classify_with_bert
-
-def perform_classification(logs):
-    labels = []
-    for log_msg in logs:
-        label = classification_with_bert(log_msg)
-        labels.append(label)
-    return labels
+import onnxruntime as ort
+import numpy as np
+from sentence_transformers import SentenceTransformer
+import pandas as pd
 
 
-def classify(input_file):
-    import pandas as pd
-    df = pd.read_csv(input_file)
 
-    # Perform classification
-    df["classification"] = perform_classification(list(zip(df["app_name"], df["message"])))
+def classify(csv_file):
 
-    # Save the modified file
-    output_file = "output.csv"
-    df.to_csv(output_file, index=False)
+    onnx_session = ort.InferenceSession("../models/myclassifier/1/log_classifier.onnx")
+    model = SentenceTransformer('all-MiniLM-L6-v2')
+    
+    test_df = pd.read_csv(csv_file)
+    test_df['classification'] = ''
 
-    return output_file
+
+    for index, row in test_df.iterrows():
+        test_log = row['message']
+        test_embeddings = model.encode([test_log])
+        test_inputs = {onnx_session.get_inputs()[0].name: test_embeddings.astype(np.float32)}
+        # print(test_inputs) --> {'float_input': array([[ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00, ...]], dtype=float32)}
+        # print(onnx_session.get_inputs()[0]) --> NodeArg(name='float_input', type='tensor(float)', shape=[None, 384])
+        test_probabilities = onnx_session.run(None, test_inputs)
+        test_predicted_label = 'Unclassified'
+        if(len(test_probabilities) < 2):
+            probabilities_dict = test_probabilities[1][0]
+            test_predicted_label = max(probabilities_dict, key=probabilities_dict.get)
+            print(test_log, "--> Unclassified -->", test_predicted_label)
+        else:
+            test_predicted_label = test_probabilities[0][0]
+            # print(test_log, "->", test_predicted_label, "-->", test_probabilities)
+        test_df.at[index, 'classification'] = test_predicted_label
+
+    test_df.to_csv('myapp_logs-test_with_classification.nogit.csv', index=False)
+
 
 if __name__ == '__main__':
     classify("test.csv")
