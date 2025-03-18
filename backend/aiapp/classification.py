@@ -2,15 +2,27 @@ import onnxruntime as ort
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import pandas as pd
+import os
+from datetime import datetime, timedelta
+import utils
 
 
+def classify_using_csv(csv_file):
 
-def classify(csv_file):
+    utils.send_to_websocket(f"classifying using datafile: {csv_file}")
+    test_df = pd.read_csv(csv_file)
+    classify(test_df)
 
-    onnx_session = ort.InferenceSession("../models/myclassifier/1/log_classifier.onnx")
+
+def classify(test_df):
+
+    onnx_session = ort.InferenceSession("/models/myclassifier/1/log_classifier.onnx")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     
-    test_df = pd.read_csv(csv_file)
+    utils.send_to_websocket(f"Classifying using model: all-MiniLM-L6-v2 from:/models/myclassifier/1/log_classifier.onnx")
+    row_count = len(test_df)
+    utils.send_to_websocket(f"Total rows to classify: {row_count}")
+    
     test_df['classification'] = ''
 
 
@@ -31,11 +43,33 @@ def classify(csv_file):
             # print(test_log, "->", test_predicted_label, "-->", test_probabilities)
         test_df.at[index, 'classification'] = test_predicted_label
 
-    test_df.to_csv('myapp_logs-test_with_classification.nogit.csv', index=False)
+    return test_df
+
+def dataframe_to_csv(df, filesuffix):
+    dir=os.path.dirname(filesuffix)
+    if dir is None or dir == "": 
+        dir="/tmp"
+        filename = f"classified_{filesuffix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+    else: # this means I have provided the original unclassified csv file fullpath 
+        filename = f"classified_{os.path.basename(filesuffix)}"
+    
+    classified_file = os.path.join(dir, filename)
+    df.to_csv(classified_file, index=False)
+    
+    return {"filename": classified_file}
+
+def classify_and_display_from_csv(csvfile, page, rowcount):
+    df = classify_using_csv(csvfile)
+    csv = dataframe_to_csv(df, csvfile)
+    return utils.display_logs(csv['filename'], page, rowcount)
+    
+def classify_and_display_from_data(df, page, rowcount):
+    classified_df = classify(df)
+    return utils.display_logs(classified_df, page, rowcount)
 
 
 if __name__ == '__main__':
-    classify("test.csv")
+    classify_using_csv("/workspaces/ai-lab/training/myapp_logs-test.nogit.csv")
     # logs = [
     #     ("ModernCRM", "IP 192.168.133.114 blocked due to potential attack"),
     #     ("BillingSystem", "User 12345 logged in."),

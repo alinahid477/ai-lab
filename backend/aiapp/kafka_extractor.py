@@ -4,16 +4,31 @@ import time
 from datetime import datetime, timedelta
 import pandas as pd
 import os
+import utils
+import asyncio
 
-def extract_kafka_logs(duration):
+async def send_error_message(message):
+    await utils.send_to_websocket(message)
+
+def get_logs(topic, duration):
+    if duration not in [1, 2, 4, 6, 12, 24, 48, 72]:
+        asyncio.run(send_error_message(f"STATUS: ERROR [500] Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours."))
+        raise Exception(f"Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours.")
+    if topic is None: 
+        asyncio.run(send_error_message(f"STATUS: ERROR [500] Empty topic supplied. Must provide valid topic."))
+        raise Exception("Empty topic supplied. Must provide valid topic.")    
+
     kafkaBrokers = os.getenv("KAFKA_BROKER_ENDPOINT")
     caRootLocation='/certs/kafkabroker/ssl/CARoot.pem'
     certLocation='/certs/kafkabroker/ssl/certificate.pem'
     keyLocation='/certs/kafkabroker/ssl/key.pem'
     password=os.getenv("KAFKA_BROKER_SSL_PASSWORD")
 
+    print("debug 1")
 
-    topic='ocplogs-myapp'
+    asyncio.run(send_error_message(f"getting log for the past: {duration}hrs from broker: {kafkaBrokers} on topic: {topic}"))
+
+
     consumer = KafkaConsumer(topic,
         bootstrap_servers=[kafkaBrokers],
         value_deserializer=lambda x: x.decode('utf-8'),
@@ -55,7 +70,7 @@ def extract_kafka_logs(duration):
             break
         msg = event.value
         if msg is None:
-            print("Waiting...")
+            asyncio.run(send_error_message("Waiting..."))
         else:
             obj = json.loads(msg)
             timestamp = obj.get('@timestamp', 'N/A')
@@ -82,12 +97,35 @@ def extract_kafka_logs(duration):
             count+=1
 
         df = pd.DataFrame(data)
+    return df
 
-    filename = f"/tmp/myapp_logs_{duration}hrs_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+
+def dataframe_to_csv (df, fileprefix):
+    filename = f"/tmp/{fileprefix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
     df.to_csv(filename, index=False)
 
-    return filename
+    return {"filename": filename}
 
+
+def getcsv_and_display(topic, duration, fileprefix, page, rowcount):
+    df = get_logs(topic, duration)
+    csv = dataframe_to_csv(df, fileprefix)
+    if page is None:
+        page = 0
+    if rowcount is None:
+        rowcount = 20
+    return utils.display_logs(csv['filename'], page, rowcount)
+
+
+def getdata_and_display(topic, duration, page, rowcount):
+    df = get_logs(topic, duration)
+    if page is None:
+        page = 0
+    if rowcount is None:
+        rowcount = 20
+    return utils.display_logs(df, page, rowcount)
+        
 
 if __name__ == '__main__':
-    extract_kafka_logs(24)
+    ret = getdata_and_display("ocplogs-myapp", 1, None, None)
+    print(ret)

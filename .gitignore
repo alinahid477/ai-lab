@@ -52,3 +52,6 @@ frontend/.vercel
 frontend/*.tsbuildinfo
 frontend/next-env.d.ts
 frontend/.next/*
+
+
+backend/aiapp/__pycache__
