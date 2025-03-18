@@ -8,7 +8,7 @@ async def send_to_websocket(data):
     if isinstance(data, dict):
         data = json.dumps(data)
     wsurl=os.getenv("WS_ENDPOINT")
-    print(f"{wsurl}--->{data}")
+    # print(f"{wsurl}--->{data}")
     async with websockets.connect(wsurl) as websocket:
         await websocket.send(data)
         print(f"message: {data} SENT TO: {wsurl}")
