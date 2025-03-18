@@ -4,13 +4,41 @@ import { AIInputForm } from "@/components/custom/AIInputForm";
 import {Terminal} from "@/components/custom/Terminal";
 import { useGlobalState } from "@/context/GlobalStateContext";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
+import { useEffect, useState } from "react";
+import { timeStamp } from "console";
 
 export default function Home() {
 
   const socketUrl = "ws://localhost:8765";
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
-
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { tableData, setTableData } = useGlobalState();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [wsMessage, setWSMessage] = useState<{ data: any; timeStamp: number } | null>(null);
+  
+  useEffect(() => {
+    if (lastMessage && typeof lastMessage === 'object' && 'data' in lastMessage && 'timeStamp' in lastMessage) {
+      
+      let parsedData;
+      try {
+        parsedData = JSON.parse(lastMessage.data);
+        if (typeof parsedData === 'object' && parsedData !== null) {
+          if(parsedData.type === "terminalinfo") {
+            
+            setWSMessage({ data: parsedData.data, timeStamp: lastMessage.timeStamp });
+          }
+        } else {
+          console.log("Parsed data is not a JSON object, it is text:", lastMessage.data);
+        }
+      } catch (error) {
+        console.log(error)
+        console.log("Failed to parse data as JSON, treating as text:", lastMessage.data);
+      }
+      
+      
+    }
+  }, [lastMessage]);
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
@@ -37,7 +65,7 @@ export default function Home() {
         </ol>
         <div className="grid grid-cols-4 gap-4 min-w-[200px]">
         <div className="col-span-3">
-            <Terminal commands="none" username="anahid" machinename="aimachine" socketMessage={lastMessage}/>
+            <Terminal commands="none" username="anahid" machinename="aimachine" socketMessage={wsMessage}/>
           </div>
           <div className="col-span-1">
             <AIInputForm />

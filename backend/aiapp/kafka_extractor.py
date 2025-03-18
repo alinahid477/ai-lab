@@ -8,7 +8,7 @@ import utils
 import asyncio
 
 async def send_message_to_ws(message):
-    await utils.send_to_websocket(message)
+    await utils.send_to_websocket({"type": "terminalinfo", "data": message})
 
 async def get_logs(topic, duration):
     if duration not in [1, 2, 4, 6, 12, 24, 48, 72]:

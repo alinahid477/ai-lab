@@ -29,6 +29,7 @@ async def handle_client(websocket):
 # Main function to start the WebSocket server
 async def main():
     server = await websockets.serve(handle_client, 'localhost', 8765)
+    print("server started on port localhost:8765")
     await server.wait_closed()
 
 # Run the server
