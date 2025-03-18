@@ -7,15 +7,15 @@ import os
 import utils
 import asyncio
 
-async def send_error_message(message):
+async def send_message_to_ws(message):
     await utils.send_to_websocket(message)
 
-def get_logs(topic, duration):
+async def get_logs(topic, duration):
     if duration not in [1, 2, 4, 6, 12, 24, 48, 72]:
-        asyncio.run(send_error_message(f"STATUS: ERROR [500] Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours."))
+        asyncio.run(send_message_to_ws(f"STATUS: ERROR [500] Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours."))
         raise Exception(f"Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours.")
     if topic is None: 
-        asyncio.run(send_error_message(f"STATUS: ERROR [500] Empty topic supplied. Must provide valid topic."))
+        asyncio.run(send_message_to_ws(f"STATUS: ERROR [500] Empty topic supplied. Must provide valid topic."))
         raise Exception("Empty topic supplied. Must provide valid topic.")    
 
     kafkaBrokers = os.getenv("KAFKA_BROKER_ENDPOINT")
@@ -24,9 +24,8 @@ def get_logs(topic, duration):
     keyLocation='/certs/kafkabroker/ssl/key.pem'
     password=os.getenv("KAFKA_BROKER_SSL_PASSWORD")
 
-    print("debug 1")
+    await send_message_to_ws(f"getting log for the past: {duration}hrs from broker: {kafkaBrokers} on topic: {topic}")
 
-    asyncio.run(send_error_message(f"getting log for the past: {duration}hrs from broker: {kafkaBrokers} on topic: {topic}"))
 
 
     consumer = KafkaConsumer(topic,
@@ -46,6 +45,7 @@ def get_logs(topic, duration):
 
     timestamp_duration_hrs_ago = int((datetime.now() - timedelta(hours=duration)).timestamp() * 1000)
 
+    
 
     partitions = consumer.partitions_for_topic(topic)
     topic_partitions = [TopicPartition(topic, p) for p in partitions]
@@ -70,7 +70,7 @@ def get_logs(topic, duration):
             break
         msg = event.value
         if msg is None:
-            asyncio.run(send_error_message("Waiting..."))
+            print("Waiting...")
         else:
             obj = json.loads(msg)
             timestamp = obj.get('@timestamp', 'N/A')
@@ -95,34 +95,41 @@ def get_logs(topic, duration):
             #     # print(f"level: {level}, count: {count}")
             #     count = count + 0 # do nothing
             count+=1
-
-        df = pd.DataFrame(data)
+    df = pd.DataFrame(data)
+    await send_message_to_ws(f"received total: {len(df)} logs")
     return df
 
 
-def dataframe_to_csv (df, fileprefix):
+async def dataframe_to_csv (df, fileprefix):
     filename = f"/tmp/{fileprefix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+    await send_message_to_ws(f"Saving logs to file: {filename}")
     df.to_csv(filename, index=False)
-
+    await send_message_to_ws(f"file {filename} saved successfully.")
     return {"filename": filename}
 
 
-def getcsv_and_display(topic, duration, fileprefix, page, rowcount):
-    df = get_logs(topic, duration)
-    csv = dataframe_to_csv(df, fileprefix)
+async def getcsv_and_display(topic, duration, fileprefix, page, rowcount):
+    await send_message_to_ws(f"Received request to retrieve logs from Kafka on topic: {topic} for the last {duration}hrs.")
+    df = await get_logs(topic, duration)
+    await send_message_to_ws(f"Saving logs to CSV file...")
+    csv = await dataframe_to_csv(df, fileprefix)
     if page is None:
         page = 0
     if rowcount is None:
         rowcount = 20
-    return utils.display_logs(csv['filename'], page, rowcount)
+    data = utils.display_logs(csv['filename'], page, rowcount)
+    await send_message_to_ws(f"Respond back with rows: {page*rowcount} - {page*rowcount + rowcount}.")
+    return data
 
 
-def getdata_and_display(topic, duration, page, rowcount):
-    df = get_logs(topic, duration)
+async def getdata_and_display(topic, duration, page, rowcount):
+    await send_message_to_ws(f"Received request to retrieve logs from Kafka on topic: {topic} for the last {duration}hrs.")
+    df = await get_logs(topic, duration)
     if page is None:
         page = 0
     if rowcount is None:
         rowcount = 20
+    await send_message_to_ws(f"Respond back with rows: {page*rowcount} - {page*rowcount + rowcount}.")
     return utils.display_logs(df, page, rowcount)
         
 

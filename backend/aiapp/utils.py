@@ -5,7 +5,7 @@ import os
 
 async def send_to_websocket(message):
     wsurl=os.getenv("WS_ENDPOINT")
-    print(f"{wsurl}--->{message}")
+    # print(f"{wsurl}--->{message}")
     async with websockets.connect(wsurl) as websocket:
         await websocket.send(message)
         print(f"message: {message} SENT TO: {wsurl}")

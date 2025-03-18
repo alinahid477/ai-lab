@@ -1,9 +1,17 @@
+"use client"
 import Image from "next/image";
 import { AIInputForm } from "@/components/custom/AIInputForm";
 import {Terminal} from "@/components/custom/Terminal";
-
+import { useGlobalState } from "@/context/GlobalStateContext";
+import useWebSocket, { ReadyState } from 'react-use-websocket';
 
 export default function Home() {
+
+  const socketUrl = "ws://localhost:8765";
+  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+
+
+
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
@@ -27,43 +35,22 @@ export default function Home() {
             Save and see your changes instantly.
           </li>
         </ol>
-        <AIInputForm />
-        <Terminal commands="none" username="anahid" machinename="aimachine"/>
+        <div className="grid grid-cols-4 gap-4 min-w-[200px]">
+        <div className="col-span-3">
+            <Terminal commands="none" username="anahid" machinename="aimachine" socketMessage={lastMessage}/>
+          </div>
+          <div className="col-span-1">
+            <AIInputForm />
+          </div>
+          
+        </div>
+        
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
+        An AI experiment by Ali Nahid
         <a
           className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
+          href="mail:to(anahid@redhat.com)"
           target="_blank"
           rel="noopener noreferrer"
         >
@@ -74,7 +61,7 @@ export default function Home() {
             width={16}
             height={16}
           />
-          Go to nextjs.org →
+          anahid@redhat.com →
         </a>
       </footer>
     </div>

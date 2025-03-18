@@ -70,12 +70,15 @@ export function AIInputForm() {
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="12">past 12 hrs</SelectItem>
-                <SelectItem value="24">past 24 hrs</SelectItem>
-                <SelectItem value="48">past 48 hrs</SelectItem>
+                <SelectItem value="1">Last 1 hr</SelectItem>
+                <SelectItem value="2">Last 2 hrs</SelectItem>
+                <SelectItem value="6">Last 6 hrs</SelectItem>
+                <SelectItem value="12">Last 12 hrs</SelectItem>
+                <SelectItem value="24">Last 24 hrs</SelectItem>
+                <SelectItem value="48">Last 48 hrs</SelectItem>
               </SelectContent>
             </Select>
-              <FormDescription>Select the log duration (eg: past 12hrs, past 24hrs, past 48hrs etc)</FormDescription>
+              <FormDescription>Select the log duration (eg: Last 12hrs, Last 24hrs, Last 48hrs etc)</FormDescription>
             <FormMessage />
           </FormItem>
         )}
@@ -106,7 +109,7 @@ export function AIInputForm() {
       />
       </CardContent>
       <CardFooter>
-        <Button className="w-full">Sign in</Button>
+        <Button className="w-full">Send to AI</Button>
       </CardFooter>
       </form>
       </Form>

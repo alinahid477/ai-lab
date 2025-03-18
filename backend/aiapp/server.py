@@ -13,7 +13,7 @@ app = FastAPI()
 @app.get("/getapplogs")
 async def get_app_logs(duration: int):
     try:
-        return kafka_extractor.getcsv_and_display("ocplogs-myapp", duration, "myappocp", 0, 30)
+        return await kafka_extractor.getcsv_and_display("ocplogs-myapp", duration, "myappocp", 0, 30)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

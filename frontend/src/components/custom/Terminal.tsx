@@ -6,7 +6,7 @@ import { time } from "console";
 import React, { useEffect, useRef, useState } from "react";
 import { set } from "react-hook-form";
 import { TypeAnimation } from "react-type-animation";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+
 
 export interface Command {
   command: string;
@@ -27,6 +27,8 @@ interface TerminalProps {
   commands: string;
   machinename: string;
   username: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  socketMessage?: { [key: string]: any },
   initialFeed?: string;
 }
 
@@ -78,7 +80,7 @@ const formatTimestamp = (timestamp: number): string => {
   return formattedTime;
 }
 
-export function Terminal({ commands, machinename, username, initialFeed = "AI Terminal to display the processing outputs.", }: TerminalProps 
+export function Terminal({ commands, machinename, username, initialFeed = "AI Terminal to display the processing outputs.", socketMessage, }: TerminalProps 
     // onCommandNotFound = (cmd: string) => `'${cmd}': command  not found.`,
     //disableClearCommand,
   ) {
@@ -157,17 +159,16 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
     }, []);
 
 
-    const socketUrl = "ws://localhost:8765";
-    const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
+    
 
     useEffect(() => {
-      if (lastMessage !== null) {
-        const txt = lastMessage.data;
-        const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${formatTimestamp(lastMessage.timeStamp)}`];
+      if (socketMessage) {
+        const txt = socketMessage.data;
+        const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${formatTimestamp(socketMessage.timeStamp)}`];
         newOutput.push(txt);
         setOutput(newOutput);
       }
-    }, [lastMessage]);
+    }, [socketMessage]);
   
     // Update the caret position
     useEffect(() => {
@@ -208,7 +209,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
             AI Terminal
           </div>
         </div>
-        <div className="overflow-y-auto pt-4 px-2" ref={wrapperRef}>
+        <div className="overflow-y-auto pt-4 px-2 max-h-[400px]" ref={wrapperRef}>
           <TypeAnimation speed={90} cursor={false} sequence={[initialFeed]} />
           {output.map(getPrompt)}
           <div className="flex relative">
@@ -223,7 +224,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
             </span>
             :<span className="dark:text-yellow-500/80 text-orange-800 font-bold">~</span>
             <span className="dark:text-red-500/80 text-red-800 font-bold">$</span>&nbsp;
-            <div className="flex-grow relative">
+            {/* <div className="flex-grow relative">
               <span id="hiddenSpan" className="invisible fixed" ref={hiddenSpanRef} />
               <input
                 ref={inputRef}
@@ -246,7 +247,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
                   />
                 ) : null}
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
