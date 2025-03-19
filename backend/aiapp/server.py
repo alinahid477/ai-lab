@@ -6,9 +6,31 @@ import classification
 
 import kafka_extractor
 
+import utils
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI()
 
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allow all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all HTTP methods
+    allow_headers=["*"],  # Allow all headers
+)
+@app.get("/csvlogs")
+async def get_csv_logs(filepath, page: int, rowcount: int):
+    # http://localhost:8000/csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=20
+    try:
+        if page is None:
+            page = 0
+        if rowcount is None:
+            rowcount = 20
+        print(f"{filepath}---{page} -- {rowcount}")
+        data = utils.display_logs(filepath, page, rowcount)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/getapplogs")
 async def get_app_logs(duration: int):

@@ -7,6 +7,10 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import * as z from "zod"
 // import {cn} from "@/lib/utils"
 import {Button} from "@/components/ui/button"
+
+import { useAppContext } from "@/context/AppContext";
+
+
 import {
     Form,
     FormControl,
@@ -28,13 +32,36 @@ const formSchema = z.object({
     ddlLogDuration: z.string(),
     ddlAction: z.string()
 });
+
+
 export function AIInputForm() {
+  
+  const { dataTable, setDataTable } = useAppContext();  
+  
   const form = useForm < z.infer < typeof formSchema >> ({
     resolver: zodResolver(formSchema),
 
   });
+
+
+
   function onSubmit(values: z.infer < typeof formSchema > ) {
     try {
+      fetch("http://localhost:8000/csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=20")
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error("Network response was not ok");
+          }
+          return response.json();
+        })
+        .then((data) => {
+          console.log("Fetched data:", data);
+          setDataTable(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+          toast.error("Failed to fetch data. Please try again.");
+        });
       console.log(values);
       toast(
         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">

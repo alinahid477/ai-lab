@@ -1,0 +1,248 @@
+{
+    "filepath": "/tmp/myappocp_202503182148.csv",
+    "page": 0,
+    "totalrow": 289,
+    "rowcount": 30,
+    "data": [
+      {
+        "timestamp": "2025-03-18T20:48:42.729604220Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Escalation rule execution failed for ticket ID 2868 - undefined escalation level."
+      },
+      {
+        "timestamp": "2025-03-18T20:48:51.632395939Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "security breach occurred. user tried to log in from outside of business hours"
+      },
+      {
+        "timestamp": "2025-03-18T20:49:02.732943089Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Lead conversion failed for prospect ID 4798 due to missing contact information."
+      },
+      {
+        "timestamp": "2025-03-18T20:49:12.734828565Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Support for legacy authentication methods will be discontinued after 2025-06-01."
+      },
+      {
+        "timestamp": "2025-03-18T20:49:42.739712006Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Lead conversion failed for prospect ID 2817 due to missing contact information."
+      },
+      {
+        "timestamp": "2025-03-18T20:49:52.741170237Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Customer follow-up process for lead ID 7897 failed due to missing next action."
+      },
+      {
+        "timestamp": "2025-03-18T20:50:01.643665363Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "RAID array experienced disk crash"
+      },
+      {
+        "timestamp": "2025-03-18T20:50:22.745995504Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Customer follow-up process for lead ID 3832 failed due to missing next action."
+      },
+      {
+        "timestamp": "2025-03-18T20:52:21.670641780Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "suspicious activity observed from ip 172.135.223.12"
+      },
+      {
+        "timestamp": "2025-03-18T20:53:52.780104652Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "The 'ExportToCSV' feature is outdated. Please migrate to 'ExportToXLSX' by the end of Q3."
+      },
+      {
+        "timestamp": "2025-03-18T20:56:01.584290582Z",
+        "namespace_name": "myapp",
+        "app_name": "busybox",
+        "level": "default",
+        "log_type": "application",
+        "message": "I am busybox. Running normally.."
+      },
+      {
+        "timestamp": "2025-03-18T20:57:11.725168499Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "suspicious activity observed from ip 172.135.223.12"
+      },
+      {
+        "timestamp": "2025-03-18T21:00:22.842370168Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "API endpoint 'getCustomerDetails' is deprecated and will be removed in version 3.2. Use 'fetchCustomerInfo' instead."
+      },
+      {
+        "timestamp": "2025-03-18T21:02:11.777525750Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "RAID array experienced disk crash"
+      },
+      {
+        "timestamp": "2025-03-18T21:03:11.788875842Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "suspicious activity observed from ip 192.168.1.10"
+      },
+      {
+        "timestamp": "2025-03-18T21:03:32.872449125Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Support for legacy authentication methods will be discontinued after 2025-06-01."
+      },
+      {
+        "timestamp": "2025-03-18T21:04:01.610390985Z",
+        "namespace_name": "myapp",
+        "app_name": "busybox",
+        "level": "default",
+        "log_type": "application",
+        "message": "I am busybox. I have just faced an issue..."
+      },
+      {
+        "timestamp": "2025-03-18T21:08:52.926523919Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Support for legacy authentication methods will be discontinued after 2025-06-01."
+      },
+      {
+        "timestamp": "2025-03-18T21:09:21.856121183Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "invoice generated successfully"
+      },
+      {
+        "timestamp": "2025-03-18T21:10:01.861902609Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "RAID array experienced disk crash"
+      },
+      {
+        "timestamp": "2025-03-18T21:10:12.939931093Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Support for legacy authentication methods will be discontinued after 2025-06-01."
+      },
+      {
+        "timestamp": "2025-03-18T21:11:22.951666347Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Lead conversion failed for prospect ID 6488 due to missing contact information."
+      },
+      {
+        "timestamp": "2025-03-18T21:11:31.636306054Z",
+        "namespace_name": "myapp",
+        "app_name": "busybox",
+        "level": "default",
+        "log_type": "application",
+        "message": "I am busybox. Running normally.."
+      },
+      {
+        "timestamp": "2025-03-18T21:12:31.639482859Z",
+        "namespace_name": "myapp",
+        "app_name": "busybox",
+        "level": "default",
+        "log_type": "application",
+        "message": "I am busybox. Running normally.."
+      },
+      {
+        "timestamp": "2025-03-18T21:13:02.970435036Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Escalation rule execution failed for ticket ID 5853 - undefined escalation level."
+      },
+      {
+        "timestamp": "2025-03-18T21:13:11.893249492Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "suspicious activity observed from ip 192.168.220.110"
+      },
+      {
+        "timestamp": "2025-03-18T21:13:12.971937895Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Lead conversion failed for prospect ID 4500 due to missing contact information."
+      },
+      {
+        "timestamp": "2025-03-18T21:13:21.894685141Z",
+        "namespace_name": "myapp",
+        "app_name": "billing",
+        "level": "default",
+        "log_type": "application",
+        "message": "invoice generated successfully"
+      },
+      {
+        "timestamp": "2025-03-18T21:13:31.642484944Z",
+        "namespace_name": "myapp",
+        "app_name": "busybox",
+        "level": "default",
+        "log_type": "application",
+        "message": "I am busybox. Running normally.."
+      },
+      {
+        "timestamp": "2025-03-18T21:13:42.976632943Z",
+        "namespace_name": "myapp",
+        "app_name": "legacycrm",
+        "level": "default",
+        "log_type": "application",
+        "message": "Customer follow-up process for lead ID 7319 failed due to missing next action."
+      }
+    ]
+  }

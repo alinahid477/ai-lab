@@ -2,21 +2,24 @@
 import Image from "next/image";
 import { AIInputForm } from "@/components/custom/AIInputForm";
 import {Terminal} from "@/components/custom/Terminal";
-import { useGlobalState } from "@/context/GlobalStateContext";
+import { useAppContext } from "@/context/AppContext";
 import useWebSocket, { ReadyState } from 'react-use-websocket';
 import { useEffect, useState } from "react";
-import { timeStamp } from "console";
+import {LogData, columns} from "@/components/custom/LogsTable/columns"
+import { DataTable } from "@/components/custom/LogsTable/data-table";
+
 
 export default function Home() {
 
   const socketUrl = "ws://localhost:8765";
   const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { tableData, setTableData } = useGlobalState();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [wsMessage, setWSMessage] = useState<{ data: any; timeStamp: number } | null>(null);
   
+  const { dataTable } = useAppContext();
+
+
   useEffect(() => {
     if (lastMessage && typeof lastMessage === 'object' && 'data' in lastMessage && 'timeStamp' in lastMessage) {
       
@@ -25,12 +28,11 @@ export default function Home() {
         parsedData = JSON.parse(lastMessage.data);
         if (typeof parsedData === 'object' && parsedData !== null) {
           if(parsedData.type === "terminalinfo") {
-            
             setWSMessage({ data: parsedData.data, timeStamp: lastMessage.timeStamp });
-          }
-        } else {
-          console.log("Parsed data is not a JSON object, it is text:", lastMessage.data);
-        }
+          } else {
+            console.log("Parsed data is not a JSON object, it is text:", lastMessage.data);
+          }    
+        }    
       } catch (error) {
         console.log(error)
         console.log("Failed to parse data as JSON, treating as text:", lastMessage.data);
@@ -65,14 +67,18 @@ export default function Home() {
         </ol>
         <div className="grid grid-cols-4 gap-4 min-w-[200px]">
         <div className="col-span-3">
-            <Terminal commands="none" username="anahid" machinename="aimachine" socketMessage={wsMessage}/>
+            <Terminal commands="none" username="anahid" machinename="aimachine" socketMessage={wsMessage || {}}/>
           </div>
           <div className="col-span-1">
             <AIInputForm />
           </div>
-          
         </div>
-        
+        {dataTable && dataTable.data && dataTable.data.length > 1 && (
+          <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
+            {/* Render tableData content here */}
+            <DataTable columns={columns} data={dataTable.data} />
+          </div>
+        )}
       </main>
       <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
         An AI experiment by Ali Nahid
