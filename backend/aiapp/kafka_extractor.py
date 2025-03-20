@@ -24,9 +24,10 @@ async def get_logs(topic, duration):
     keyLocation='/certs/kafkabroker/ssl/key.pem'
     password=os.getenv("KAFKA_BROKER_SSL_PASSWORD")
 
-    await send_message_to_ws(f"getting log for the past: {duration}hrs from broker: {kafkaBrokers} on topic: {topic}")
+    await send_message_to_ws(f"getting logs for the past: {duration}hrs for topic: {topic}")
+    await send_message_to_ws(f"kafka broker: {kafkaBrokers}")
 
-
+    
 
     consumer = KafkaConsumer(topic,
         bootstrap_servers=[kafkaBrokers],

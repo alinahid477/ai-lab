@@ -7,6 +7,7 @@ import classification
 import kafka_extractor
 
 import utils
+import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -18,6 +19,11 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+
+
+async def send_message_to_ws(message):
+    await utils.send_to_websocket({"type": "terminalinfo", "data": message})
+
 @app.get("/csvlogs")
 async def get_csv_logs(filepath, page: int, rowcount: int):
     # http://localhost:8000/csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=20
@@ -26,8 +32,10 @@ async def get_csv_logs(filepath, page: int, rowcount: int):
             page = 0
         if rowcount is None:
             rowcount = 20
-        print(f"{filepath}---{page} -- {rowcount}")
+        await utils.send_to_websocket({"type": "terminalinfo", "data": f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}."})
+        # send_message_to_ws(f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}.")
         data = utils.display_logs(filepath, page, rowcount)
+        print(data)
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

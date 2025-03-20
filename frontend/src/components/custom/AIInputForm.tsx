@@ -20,6 +20,7 @@ import {
     FormLabel,
     FormMessage,
 } from "@/components/ui/form"
+
 import {
     Select,
     SelectContent,
@@ -28,6 +29,11 @@ import {
     SelectValue
 } from "@/components/ui/select"
   
+
+import samplelogs from "@/lib/sample-logs.json"
+
+import {fetchData} from "@/lib/utils"
+
 const formSchema = z.object({
     ddlLogDuration: z.string(),
     ddlAction: z.string()
@@ -36,7 +42,7 @@ const formSchema = z.object({
 
 export function AIInputForm() {
   
-  const { dataTable, setDataTable } = useAppContext();  
+  const { setDataTable } = useAppContext();  
   
   const form = useForm < z.infer < typeof formSchema >> ({
     resolver: zodResolver(formSchema),
@@ -47,25 +53,24 @@ export function AIInputForm() {
 
   function onSubmit(values: z.infer < typeof formSchema > ) {
     try {
-      fetch("http://localhost:8000/csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=20")
-        .then((response) => {
-          if (!response.ok) {
-            throw new Error("Network response was not ok");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Fetched data:", data);
-          setDataTable(data);
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-          toast.error("Failed to fetch data. Please try again.");
-        });
-      console.log(values);
+      const logDuration = parseInt(values.ddlLogDuration, 10);
+      const action = values.ddlAction; 
+      
+      if (action === "rawlog") {
+        const str="getapplogs?duration="+logDuration
+        fetchData(str)
+          .then((data) => {
+            setDataTable(data);
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            toast.error("Failed to fetch data. Please try again.");
+          });
+      }
+      
       toast(
         <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(values, null, 2)}</code>
+          <code className="text-black">{JSON.stringify(values, null, 2)}</code>
         </pre>
       );
     } catch (error) {

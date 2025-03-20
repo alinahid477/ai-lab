@@ -224,7 +224,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
             </span>
             :<span className="dark:text-yellow-500/80 text-orange-800 font-bold">~</span>
             <span className="dark:text-red-500/80 text-red-800 font-bold">$</span>&nbsp;
-            {/* <div className="flex-grow relative">
+            <div className="flex-grow relative">
               <span id="hiddenSpan" className="invisible fixed" ref={hiddenSpanRef} />
               <input
                 ref={inputRef}
@@ -247,7 +247,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
                   />
                 ) : null}
               </div>
-            </div> */}
+            </div>
           </div>
         </div>
       </div>
