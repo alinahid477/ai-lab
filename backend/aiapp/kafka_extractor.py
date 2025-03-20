@@ -117,7 +117,7 @@ async def getcsv_and_display(topic, duration, fileprefix, page, rowcount):
     if page is None:
         page = 0
     if rowcount is None:
-        rowcount = 20
+        rowcount = 100
     data = utils.display_logs(csv['filename'], page, rowcount)
     await send_message_to_ws(f"Respond back with rows: {page*rowcount} - {page*rowcount + rowcount}.")
     return data
@@ -129,7 +129,7 @@ async def getdata_and_display(topic, duration, page, rowcount):
     if page is None:
         page = 0
     if rowcount is None:
-        rowcount = 20
+        rowcount = 100
     await send_message_to_ws(f"Respond back with rows: {page*rowcount} - {page*rowcount + rowcount}.")
     return utils.display_logs(df, page, rowcount)
         

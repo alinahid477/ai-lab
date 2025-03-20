@@ -1,7 +1,7 @@
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
-
+import os
 import classification
 
 import kafka_extractor
@@ -31,11 +31,10 @@ async def get_csv_logs(filepath, page: int, rowcount: int):
         if page is None:
             page = 0
         if rowcount is None:
-            rowcount = 20
+            rowcount = 100
         await utils.send_to_websocket({"type": "terminalinfo", "data": f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}."})
         # send_message_to_ws(f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}.")
         data = utils.display_logs(filepath, page, rowcount)
-        print(data)
         return data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -47,24 +46,10 @@ async def get_app_logs(duration: int):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/classify/")
-async def classify_logs(csv_file_path):
+@app.get("/classifycsv")
+async def classify_csv(csv_file_path):
     try:
-        # Read the uploaded CSV
-        df = pd.read_csv(csv_file_path)
-        if "app_name" not in df.columns or "message" not in df.columns:
-            raise HTTPException(status_code=400, detail="CSV must contain 'source' and 'message' columns.")
-
-        # Perform classification
-        df["classification"] = classification.classify(list(zip(df["app_name"], df["message"])))
-
-        print("Dataframe:",df.to_dict())
-
-        # Save the modified file
-        output_file = "resources/output.csv"
-        df.to_csv(output_file, index=False)
-        print("File saved to output.csv")
-        return FileResponse(output_file, media_type='text/csv')
+        return classification.classify_and_display_from_csv(csv_file_path, 0, 100)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -72,3 +57,14 @@ async def classify_logs(csv_file_path):
         # # Clean up if the file was saved
         # if os.path.exists("output.csv"):
         #     os.remove("output.csv")
+
+@app.get("/downloadfile")
+async def download_file(filepath: str):
+    try:
+        if not os.path.exists(filepath):
+            await utils.send_to_websocket({"type": "terminalinfo", "data": f"Requested file {filepath} not found"})    
+            raise HTTPException(status_code=404, detail="File not found")
+
+        return FileResponse(filepath, media_type='text/csv')
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
