@@ -11,7 +11,7 @@ def classify_using_csv(csv_file):
 
     utils.send_to_websocket(f"classifying using datafile: {csv_file}")
     test_df = pd.read_csv(csv_file)
-    classify(test_df)
+    return classify(test_df)
 
 
 def classify(test_df):

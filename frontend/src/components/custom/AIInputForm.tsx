@@ -57,7 +57,8 @@ export function AIInputForm() {
       const action = values.ddlAction; 
       
       if (action === "rawlog") {
-        const str="getapplogs?duration="+logDuration
+        // const str="getapplogs?duration="+logDuration
+        const str="csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=100"
         fetchData(str)
           .then((data) => {
             setDataTable(data);

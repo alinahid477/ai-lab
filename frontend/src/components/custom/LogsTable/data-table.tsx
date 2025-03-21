@@ -25,6 +25,7 @@ import {
 
 import {Button} from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X } from "lucide-react"
 
 import {DataTableFacetedFilter} from "@/components/custom/LogsTable/data-table-faceted-filter"
@@ -126,9 +127,37 @@ export function DataTable<TData extends LogData, TValue>({
   const [isFiltered, setIsFiltered] = React.useState(false);
   
   const { dataTable, setDataTable } = useAppContext();
+  const [paginationMap, setPaginationMap] = React.useState<Map<number, string>>(new Map());
+  const [paginationCurrentPage, setPaginationCurrentPage] = React.useState(0);
+  React.useEffect(() => {
+    if(dataTable.totalrow && dataTable.rowcount) {
+      const totalPages = Math.ceil(dataTable.totalrow / dataTable.rowcount);
+      const pageMap = new Map<number, string>();
+      for (let i = 0; i < totalPages; i++) {
+        const startRow = i * dataTable.rowcount + 1;
+        const endRow = Math.min((i + 1) * dataTable.rowcount, dataTable.totalrow);
+        pageMap.set(i, `${startRow}-${endRow}`);
+      }
+      setPaginationMap(pageMap);
+      setPaginationCurrentPage(dataTable.page);
+    }
+  },[dataTable])
 
 
-
+  function dataTableShowPage(pageNo: string) {
+    if (pageNo !== undefined && pageNo !== null) {
+      const str = "csvlogs?filepath="+dataTable.filepath+"&page="+ pageNo +"&rowcount=" + dataTable.rowcount
+      fetchData(str)
+          .then((data) => {
+            setDataTable(data);
+            setPaginationCurrentPage(parseInt(pageNo, 0));
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            toast.error("Failed to fetch data. Please try again.");
+          });
+    }
+  }
   function getCanPreviousPage() {
     if(!dataTable || !dataTable.data) {
       return false;
@@ -259,6 +288,25 @@ export function DataTable<TData extends LogData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
+      <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">{`Showing rows ${(dataTable.page * dataTable.rowcount) === 0 ? 1 : dataTable.page * dataTable.rowcount} - ${(dataTable.page * dataTable.rowcount + dataTable.rowcount) > dataTable.totalrow ? dataTable.totalrow : dataTable.page * dataTable.rowcount + dataTable.rowcount } of ${dataTable.totalrow}`}</p>
+          <Select
+            value={paginationCurrentPage.toString()}
+            onValueChange={(value) => {
+              dataTableShowPage(value)
+            }}>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={table.getState().pagination.pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {Array.from(paginationMap.entries()).map(([key, value]) => (
+                <SelectItem key={key} value={`${key}`}>
+                  {value}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
         <Button 
           variant="outline" 
           size="sm" 

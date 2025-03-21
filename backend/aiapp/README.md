@@ -1,6 +1,6 @@
 
 
-`export $(grep -v '^#' .env | xargs)`
-
-
-`uvicorn server:app --reload`
+```
+export $(grep -v '^#' .env | xargs)
+uvicorn server:app --reload
+```

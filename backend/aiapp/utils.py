@@ -50,18 +50,25 @@ def display_logs_from_dataframe(df, page, rowcount):
     jsonData['totalrow'] = len(df)
     return jsonData
 
-def display_logs_from_csv(filepath, page, rowcount): 
-    send_to_websocket_sync({"type": "terminalinfo", "data": f"Reading data from file:{filepath}."})
-    if rowcount == -100: # -100 will mean give me all rows
+def display_logs_from_csv(filepath, page, rowcount):
+    try:
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"The file {filepath} does not exist.")
         df = pd.read_csv(filepath)
-        dfittr = df.iterrows()
-    else:
-        skip = page*rowcount        
-        df = pd.read_csv(filepath, skiprows=skip, names=["timestamp", "namespace_name","app_name","level","log_type","message"])
-        dfittr = df.head(rowcount).iterrows()
-    jsonData = get_json(dfittr, filepath, page, rowcount)
-    jsonData['totalrow'] = len(df)
-    return jsonData
+        totalrow = len (df) 
+        send_to_websocket_sync({"type": "terminalinfo", "data": f"Reading data from file:{filepath}."})
+        if rowcount == -100: # -100 will mean give me all rows    
+            dfittr = df.iterrows()
+        else:
+            skip = page*rowcount        
+            df = pd.read_csv(filepath, skiprows=skip, names=["timestamp", "namespace_name","app_name","level","log_type","message"])
+            dfittr = df.head(rowcount).iterrows()
+        jsonData = get_json(dfittr, filepath, page, rowcount)
+        jsonData['totalrow'] = totalrow
+        return jsonData
+    except Exception as e:
+        send_to_websocket_sync({"type": "terminalinfo", "data": f"Error reading data from file: {filepath}. Exception: {e}"})
+        return {"error": f"Failed to read data from file: {filepath}. Exception: {e}"}
 
 
 def get_json(df_ittr, filepath, page, rowcount):
