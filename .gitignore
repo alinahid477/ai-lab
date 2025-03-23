@@ -55,3 +55,4 @@ frontend/.next/*
 
 
 backend/aiapp/__pycache__
+training/tmp.txt

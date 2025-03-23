@@ -2,10 +2,64 @@
 // https://token-ed.github.io/react-terminal-emulator-ui/
 
 "use client"
-import { time } from "console";
 import React, { useEffect, useRef, useState } from "react";
-import { set } from "react-hook-form";
 import { TypeAnimation } from "react-type-animation";
+
+const ignoredKeys = [
+  // Control keys
+  "Escape",
+  "Tab",
+  "Enter",
+  "Shift",
+  "Control",
+  "Alt",
+  "AltGraph",
+  "Meta",
+  "CapsLock",
+  "ArrowUp",
+  "ArrowDown",
+  "ArrowLeft",
+  "ArrowRight",
+  "Backspace",
+  "Delete",
+  "Insert",
+  "NumLock",
+  "ScrollLock",
+
+  // Function keys
+  "F1",
+  "F2",
+  "F3",
+  "F4",
+  "F5",
+  "F6",
+  "F7",
+  "F8",
+  "F9",
+  "F10",
+  "F11",
+  "F12",
+
+  // Multimedia keys
+  "Play",
+  "Pause",
+  "Stop",
+  "PreviousTrack",
+  "NextTrack",
+  "VolumeUp",
+  "VolumeDown",
+  "Mute",
+
+  // Navigation keys
+  "Home",
+  "End",
+  "PageUp",
+  "PageDown",
+
+  // Windows/Command keys
+  "ContextMenu",
+];
+
 
 
 export interface Command {
@@ -24,7 +78,7 @@ export interface Command {
 // }
 
 interface TerminalProps {
-  commands: string;
+  commands: Array<Command>;
   machinename: string;
   username: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -87,13 +141,12 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
     const trimmedUserName = username.replaceAll(" ", "").toLowerCase();
     const trimmedMachineName = machinename.replaceAll(" ", "").toLowerCase();
   
-    // const allCommands: Array<Command> = disableClearCommand
-    //   ? commands
-    //   : [...commands, { command: "clear" }];
+    const allCommands: Array<Command> = [...commands, { command: "clear" }];
+
+
     const [output, setOutput] = useState<Array<React.ReactNode | undefined>>([]);
     const [focused, setFocused] = useState(true);
     const [currentLine, setCurrentLine] = useState<string>("");
-    const [lastMessageData, setLastMessageData] = useState<string>("");
     const wrapperRef = useRef<HTMLInputElement>(null);
     const inputRef = useRef<HTMLInputElement>(null);
     const caretRef = useRef<HTMLDivElement>(null);
@@ -113,35 +166,36 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
       if (event.key == "Backspace")
         return setCurrentLine(currentLine.substring(0, currentLine?.length));
       if (event.key === "Enter") {
-        // processCommand(currentLine);
+        processCommand(currentLine);
         return setCurrentLine("");
       }
     };
   
     const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
       event.preventDefault();
-      // if (!ignoredKeys.includes(event.currentTarget.value)) {
-      //   setCaretPosition();
-      //   setCurrentLine(event.currentTarget.value);
-      // }
+      if (!ignoredKeys.includes(event.currentTarget.value)) {
+        setCaretPosition();
+        setCurrentLine(event.currentTarget.value);
+      }
       setCaretPosition();
       setCurrentLine(event.currentTarget.value);
     };
   
-    // const processCommand = (cmd: string) => {
-    //   const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${cmd}`];
-    //   const foundCommand = allCommands.find((command) => command.command === cmd);
+    const processCommand = (cmd: string) => {
+      const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${cmd}`];
+      const foundCommand = allCommands.find((command) => command.command === cmd);
   
-    //   if (!foundCommand) {
-    //     newOutput.push(onCommandNotFound(cmd));
-    //   } else {
-    //     if (!disableClearCommand && foundCommand.command === "clear") return setOutput([]);
-    //     if (foundCommand.result) newOutput.push(foundCommand.result);
-    //     if (foundCommand.sideEffect) foundCommand.sideEffect();
-    //   }
+      if (!foundCommand) {
+        // newOutput.push(onCommandNotFound(cmd));
+        newOutput.push(<>command not found.</>);
+      } else {
+        if (foundCommand.command === "clear") return setOutput([]);
+        // if (foundCommand.result) newOutput.push(foundCommand.result);
+        if (foundCommand.sideEffect) foundCommand.sideEffect();
+      }
   
-    //   setOutput(newOutput);
-    // };
+      setOutput(newOutput);
+    };
   
     useEffect(() => {
       if (wrapperRef.current) {
@@ -159,13 +213,21 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
     }, []);
 
 
-    
+    // Update the caret position
+    useEffect(() => {
+      if (inputRef.current && caretRef.current && hiddenSpanRef.current) {
+        const valueLength = inputRef.current?.value.length;
+        const textBeforeCaret = currentLine.slice(0, valueLength || 0);
+        hiddenSpanRef.current.textContent = textBeforeCaret;
+        caretRef.current.style.left = `${hiddenSpanRef.current.offsetWidth}px`; // Adjust to fit input width
+      }
+    }, [currentLine]);
 
     useEffect(() => {
-      if (socketMessage) {
-        const txt = socketMessage.data;
-        const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${formatTimestamp(socketMessage.timeStamp)}`];
-        newOutput.push(txt);
+      if (socketMessage && socketMessage.data) {
+        const txt = <>[{formatTimestamp(socketMessage.timeStamp)}] {socketMessage.data}</>;
+        const newOutput = [...output, txt];
+        // newOutput.push(txt);
         setOutput(newOutput);
       }
     }, [socketMessage]);
