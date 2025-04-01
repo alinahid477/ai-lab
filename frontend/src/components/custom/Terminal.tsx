@@ -4,6 +4,8 @@
 "use client"
 import React, { useEffect, useRef, useState } from "react";
 import { TypeAnimation } from "react-type-animation";
+import {toast} from "sonner"
+import {fetchData} from "@/lib/utils"
 
 const ignoredKeys = [
   // Control keys
@@ -183,7 +185,21 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
   
     const processCommand = (cmd: string) => {
       const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${cmd}`];
-      const foundCommand = allCommands.find((command) => command.command === cmd);
+      
+      let foundCommand = allCommands.find((command) => command.command === cmd);
+
+      const str="processcommand?command="+cmd
+      fetchData(str)
+        .then((data) => {
+          foundCommand = data.command;
+          console.log(data);
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+          toast.error("Failed to fetch data. Please try again.");
+        });
+
+      
   
       if (!foundCommand) {
         // newOutput.push(onCommandNotFound(cmd));

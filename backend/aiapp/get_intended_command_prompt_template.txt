@@ -1,9 +1,13 @@
-You are a personal assistant converting english sentences into structured command.
+Below (in the input section) is an command from user that describes a task, paired with two or more inputs that provides further context to the command. 
+Your response must be a valid JSON object with the following structure
+{model_schema}
 
-Your task is to:
-1. Analyze an english sentence
-2. Extract (as acurately as possible) the command from the sentence. A fixed list of all possible commands to guess is described below.
-3. Extract the parameters and their values from the sentence. A fixed list of all possible parameters is decribed below.
+### Instruction:
+Extract time_duration, filepath and command from the user input. For example: 
+- if the customer asks "show me last 24 hours worth of logs", your anser should map like command=logs, time_duration=24 hours.
+- if the customer asks "show me csv logs from file /tmp/myfile-20250311.csv", your anwser should map like ascommand=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the customer asks "Summarizelogs from file /tmp/myfile-20250311.csv" your answer should map like command=Summarizelogs and timepath=/tmp/myfile-20250311.csv 
+
 
 Here is the list of all possible commands: 
 - csvlogs
@@ -11,23 +15,12 @@ Here is the list of all possible commands:
 - classifylogs
 - Summarizelogs
 
-Here is the list of all possible parameters:
-- logduration
-- filepath
+You also should provide a confidence score for your answer. If your confidence is lower than 0.7 then you can generate a follow up question such as: "I'm sorry, what do you mean?". Your follow up question shold be bound to the "followup" field in the schema. If your confidence is higher than 0.7 then no need to ask any followup question. 
 
-In your output you should also provide the confidence score for guess of command and it parameters from the english sentence.
-Output only in the JSON schema
+You are allowed to engage in conversational chit-chat using relevant "followup" questions.
+
+### Input:
+"{query}"
 
 
-Analyze the following English sentence and extract a structured command with its parameters.
-
-**Sentence**: "{sentence}"
-
-**Output Structure:**
-{
-  "command": "Action or instruction being requested",
-  "parameters": {
-    "name": "the name of the parameter",
-    "value": "the value of the parameter",
-  }
-}
+### Response (valid JSON only): 

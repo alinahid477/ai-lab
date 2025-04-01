@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import torch
+from outlines import models, generate
+from pydantic import BaseModel, Field
+import utils
 
 
 class SecurityEvent(BaseModel):
@@ -69,9 +72,24 @@ class LogAnalysis(BaseModel):
     requires_immediate_attention: bool
 
 
-model_path = "ibm-granite/granite-3.1-1b-a400m-base"
+class CommandParameter(BaseModel):
+    name: str
+    value: str
 
-def get_intended_command(str):
+class SentenceAnalysis(BaseModel):
+    command: str
+    followup: str
+    time_duration: str
+    file: str
+    confidence_score: float
+
+
+model_path = "ibm-granite/granite-3.1-1b-a400m-base"
+llm = AutoModelForCausalLM.from_pretrained(model_path, device_map="cpu")
+tokenizer = AutoTokenizer.from_pretrained(model_path, input_tokens=2048)
+model = models.Transformers(llm, tokenizer)
+
+def get_intended_command(english_command):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     # model_path = "ibm-granite/granite-3.1-3b-a800m-base"
     tokenizer = AutoTokenizer.from_pretrained(model_path)
@@ -79,4 +97,17 @@ def get_intended_command(str):
     model = AutoModelForCausalLM.from_pretrained(model_path, device_map=device)
     model.eval()
 
-    prompt_template_path = "get_intended_command_prompt_template.txt"
+    prompt_template_path = "/aiapp/prompt_files/get_intended_command_prompt_template.txt"
+
+    with open(prompt_template_path, "r") as file:
+        prompt_template = file.read()
+    prompt = prompt_template.format(
+                query=english_command,
+                model_schema=SentenceAnalysis.model_json_schema(),
+            )
+    generator = generate.json(model, SentenceAnalysis)
+
+    output = generator(prompt)
+    print(output)
+    return output
+    # utils.send_to_websocket({"type": "get_intended_command", "data": {output}})
