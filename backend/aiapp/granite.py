@@ -85,20 +85,24 @@ class SentenceAnalysis(BaseModel):
 
 
 model_path = "ibm-granite/granite-3.1-1b-a400m-base"
+device = "cuda" if torch.cuda.is_available() else "cpu"
 llm = AutoModelForCausalLM.from_pretrained(model_path, device_map="cpu")
 tokenizer = AutoTokenizer.from_pretrained(model_path, input_tokens=2048)
 model = models.Transformers(llm, tokenizer)
 
-def get_intended_command(english_command):
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    # model_path = "ibm-granite/granite-3.1-3b-a800m-base"
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    # drop device_map if running on CPU
-    model = AutoModelForCausalLM.from_pretrained(model_path, device_map=device)
-    model.eval()
+
+
+async def send_message_to_ws(message):
+    await utils.send_to_websocket({"type": "terminalinfo", "data": message})
+
+async def get_intended_command(english_command):
+    
+    prepared_commands = ["csvlogs", "kafkalogs", "classifylogs", "Summarizelogs"]
+
+    print("debug 0")
+    await send_message_to_ws(f"Asking Granite to find command: \"{english_command}\"")
 
     prompt_template_path = "/aiapp/prompt_files/get_intended_command_prompt_template.txt"
-
     with open(prompt_template_path, "r") as file:
         prompt_template = file.read()
     prompt = prompt_template.format(
@@ -106,8 +110,14 @@ def get_intended_command(english_command):
                 model_schema=SentenceAnalysis.model_json_schema(),
             )
     generator = generate.json(model, SentenceAnalysis)
-
     output = generator(prompt)
-    print(output)
+    print("debug 1 {output}")
+    if output.command not in prepared_commands:
+        print("debug 1")
+        await send_message_to_ws(f"Invalid command: {output.command}. Must be one of {prepared_commands}")
+        await send_message_to_ws(f"Asking Granite to simply answer: \"{english_command}\"")
+        output = generate.text(model)
+        print("debug 2")
+        await send_message_to_ws("response from Granite: \"{output}\"")
     return output
     # utils.send_to_websocket({"type": "get_intended_command", "data": {output}})
