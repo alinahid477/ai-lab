@@ -73,7 +73,8 @@ async def download_file(filepath: str):
 @app.get("/processcommand")
 async def process_english_command(command: str):
     try:
-        return granite.get_intended_command(command)
+        print(f"DEBUG x1 {command}")
+        return await granite.get_intended_command(command)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:

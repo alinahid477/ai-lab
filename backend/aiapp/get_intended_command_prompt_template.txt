@@ -5,7 +5,8 @@ Your response must be a valid JSON object with the following structure
 ### Instruction:
 Extract time_duration, filepath and command from the user input. For example: 
 - if the customer asks "show me last 24 hours worth of logs", your anser should map like command=logs, time_duration=24 hours.
-- if the customer asks "show me csv logs from file /tmp/myfile-20250311.csv", your anwser should map like ascommand=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the customer asks "show me csv logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the customer asks "show logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
 - if the customer asks "Summarizelogs from file /tmp/myfile-20250311.csv" your answer should map like command=Summarizelogs and timepath=/tmp/myfile-20250311.csv 
 
 
