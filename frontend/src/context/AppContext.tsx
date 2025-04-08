@@ -8,10 +8,10 @@ const AppContext = createContext<any>(undefined);
 
 
 export const AppWrapper = ({ children }: { children: ReactNode }) => {
-  const [dataTable, setDataTable] = useState<object>({});
+  const [myAppContext, setMyAppContext] = useState<object>({});
 
   return (
-    <AppContext.Provider value={{ dataTable, setDataTable }}>
+    <AppContext.Provider value={{ myAppContext, setMyAppContext }}>
       {children}
     </AppContext.Provider>
   );

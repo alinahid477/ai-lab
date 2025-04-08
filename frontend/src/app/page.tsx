@@ -3,21 +3,23 @@ import Image from "next/image";
 import { AIInputForm } from "@/components/custom/AIInputForm";
 import {Terminal} from "@/components/custom/Terminal";
 import { useAppContext } from "@/context/AppContext";
-import useWebSocket, { ReadyState } from 'react-use-websocket';
+import useWebSocket from 'react-use-websocket';
 import { useEffect, useState } from "react";
-import {LogData, columns} from "@/components/custom/LogsTable/columns"
+import {columns} from "@/components/custom/LogsTable/columns"
 import { DataTable } from "@/components/custom/LogsTable/data-table";
+import { AIInputSheet } from "@/components/custom/AIInputSheet";
+import ChatInterface from "@/components/custom/ChatInterface";
 
 
 export default function Home() {
 
   const socketUrl = "ws://localhost:8765";
-  const { sendMessage, lastMessage, readyState } = useWebSocket(socketUrl);
-
+  const { lastMessage } = useWebSocket(socketUrl);
+  const [isToggleToForm, setIsToggleToForm] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [wsMessage, setWSMessage] = useState<{ data: any; timeStamp: number } | null>(null);
   
-  const { dataTable } = useAppContext();
+  const { myAppContext } = useAppContext();
 
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export default function Home() {
 
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
+      <main className="flex flex-col gap-[32px] row-start-2 items-center w-full sm:items-start">
         <Image
           className="dark:invert"
           src="/next.svg"
@@ -67,19 +69,27 @@ export default function Home() {
           <li className="tracking-[-.01em]">
             Save and see your changes instantly.
           </li>
+          <li>
+              
+            <AIInputSheet />
+            
+          </li>
         </ol>
-        <div className="grid grid-cols-4 gap-4 min-w-[200px]">
-        <div className="col-span-3">
-            <Terminal commands={[]} username="anahid" machinename="aimachine" socketMessage={wsMessage || {}}/>
+        
+        <div className="grid grid-cols-4 gap-4 w-full min-w-[200px]">
+          <div className="col-span-3 min-h-[400px]">
+            <Terminal commands={[]} username="anahid" machinename="aimachine" socketMessage={wsMessage || {}}/>  
           </div>
+          
+          
           <div className="col-span-1">
-            <AIInputForm />
+            <ChatInterface />
           </div>
         </div>
-        {dataTable && dataTable.data && dataTable.data.length > 1 && (
+        {myAppContext.dataTable && myAppContext.dataTable.data && myAppContext.dataTable.data.length > 1 && (
           <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
             {/* Render tableData content here */}
-            <DataTable columns={columns} data={dataTable.data} />
+            <DataTable columns={columns} data={myAppContext.dataTable.data} />
           </div>
         )}
       </main>

@@ -126,30 +126,30 @@ export function DataTable<TData extends LogData, TValue>({
   })
   const [isFiltered, setIsFiltered] = React.useState(false);
   
-  const { dataTable, setDataTable } = useAppContext();
+  const { myAppContext, setMyAppContext } = useAppContext();
   const [paginationMap, setPaginationMap] = React.useState<Map<number, string>>(new Map());
   const [paginationCurrentPage, setPaginationCurrentPage] = React.useState(0);
   React.useEffect(() => {
-    if(dataTable.totalrow && dataTable.rowcount) {
-      const totalPages = Math.ceil(dataTable.totalrow / dataTable.rowcount);
+    if(myAppContext.dataTable && myAppContext.dataTable.totalrow && myAppContext.dataTable.rowcount) {
+      const totalPages = Math.ceil(myAppContext.dataTable.totalrow / myAppContext.dataTable.rowcount);
       const pageMap = new Map<number, string>();
       for (let i = 0; i < totalPages; i++) {
-        const startRow = i * dataTable.rowcount + 1;
-        const endRow = Math.min((i + 1) * dataTable.rowcount, dataTable.totalrow);
+        const startRow = i * myAppContext.dataTable.rowcount + 1;
+        const endRow = Math.min((i + 1) * myAppContext.dataTable.rowcount, myAppContext.dataTable.totalrow);
         pageMap.set(i, `${startRow}-${endRow}`);
       }
       setPaginationMap(pageMap);
-      setPaginationCurrentPage(dataTable.page);
+      setPaginationCurrentPage(myAppContext.dataTable.page);
     }
-  },[dataTable])
+  },[myAppContext.dataTable])
 
 
   function dataTableShowPage(pageNo: string) {
     if (pageNo !== undefined && pageNo !== null) {
-      const str = "csvlogs?filepath="+dataTable.filepath+"&page="+ pageNo +"&rowcount=" + dataTable.rowcount
+      const str = "csvlogs?filepath="+myAppContext.dataTable.filepath+"&page="+ pageNo +"&rowcount=" + myAppContext.dataTable.rowcount
       fetchData(str)
           .then((data) => {
-            setDataTable(data);
+            setMyAppContext({...myAppContext, dataTable: data});
             setPaginationCurrentPage(parseInt(pageNo, 0));
           })
           .catch((error) => {
@@ -159,20 +159,20 @@ export function DataTable<TData extends LogData, TValue>({
     }
   }
   function getCanPreviousPage() {
-    if(!dataTable || !dataTable.data) {
+    if(!myAppContext.dataTable || !myAppContext.dataTable.data) {
       return false;
     }
-    if(dataTable.page < 1) {
+    if(myAppContext.dataTable.page < 1) {
       return false;
     }
     return true;
   }
   function previousPage() {
-    if(dataTable.page > 1) {
-      const str = "csvlogs?filepath="+dataTable.filepath+"&page="+ (dataTable.page -1) +"&rowcount=" + dataTable.rowcount
+    if(myAppContext.dataTable.page > 1) {
+      const str = "csvlogs?filepath="+myAppContext.dataTable.filepath+"&page="+ (myAppContext.dataTable.page -1) +"&rowcount=" + myAppContext.dataTable.rowcount
       fetchData(str)
           .then((data) => {
-            setDataTable(data);
+            setMyAppContext({...myAppContext, dataTable: data});
           })
           .catch((error) => {
             console.error("Error fetching data:", error);
@@ -182,20 +182,20 @@ export function DataTable<TData extends LogData, TValue>({
   }
 
   function getCanNextPage() {
-    if(!dataTable || !dataTable.data) {
+    if(!myAppContext.dataTable || !myAppContext.dataTable.data) {
       return false;
     }
-    if(dataTable.totalrow < dataTable.page * dataTable.rowcount) {
+    if(myAppContext.dataTable.totalrow < myAppContext.dataTable.page * myAppContext.dataTable.rowcount) {
       return false;
     }
     return true;
   }
   function nextPage() {
-    if(dataTable.totalrow > dataTable.page * dataTable.rowcount) {
-      const str = "csvlogs?filepath="+dataTable.filepath+"&page="+ (dataTable.page +1) +"&rowcount=" + dataTable.rowcount
+    if(myAppContext.dataTable.totalrow > myAppContext.dataTable.page * myAppContext.dataTable.rowcount) {
+      const str = "csvlogs?filepath="+myAppContext.dataTable.filepath+"&page="+ (myAppContext.dataTable.page +1) +"&rowcount=" + myAppContext.dataTable.rowcount
       fetchData(str)
           .then((data) => {
-            setDataTable(data);
+            setMyAppContext({...myAppContext,dataTable: data});
           })
           .catch((error) => {
             console.error("Error fetching data:", error);
@@ -289,7 +289,7 @@ export function DataTable<TData extends LogData, TValue>({
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
       <div className="flex items-center space-x-2">
-          <p className="text-sm font-medium">{`Showing rows ${(dataTable.page * dataTable.rowcount) === 0 ? 1 : dataTable.page * dataTable.rowcount} - ${(dataTable.page * dataTable.rowcount + dataTable.rowcount) > dataTable.totalrow ? dataTable.totalrow : dataTable.page * dataTable.rowcount + dataTable.rowcount } of ${dataTable.totalrow}`}</p>
+          <p className="text-sm font-medium">{`Showing rows ${(myAppContext.dataTable.page * myAppContext.dataTable.rowcount) === 0 ? 1 : myAppContext.dataTable.page * myAppContext.dataTable.rowcount} - ${(myAppContext.dataTable.page * myAppContext.dataTable.rowcount + myAppContext.dataTable.rowcount) > myAppContext.dataTable.totalrow ? myAppContext.dataTable.totalrow : myAppContext.dataTable.page * myAppContext.dataTable.rowcount + myAppContext.dataTable.rowcount } of ${myAppContext.dataTable.totalrow}`}</p>
           <Select
             value={paginationCurrentPage.toString()}
             onValueChange={(value) => {

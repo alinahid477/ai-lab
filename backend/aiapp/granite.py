@@ -114,7 +114,7 @@ async def get_intended_command(english_command):
             )
     generator = generate.json(cmd_model, SentenceAnalysis)
     output = generator(prompt)
-    print(output)
+    print(f"output: {output}")
     if output.command not in prepared_commands:
         await send_message_to_ws(f"Invalid command: {output.command}. Must be one of {prepared_commands}")
         await send_message_to_ws(f"Asking Granite to simply answer: \"{english_command}\"")
@@ -126,13 +126,11 @@ async def get_intended_command(english_command):
         output = chat_llm.generate(**input_tokens, 
                         max_new_tokens=100)
         output = chat_tokenizer.batch_decode(output)
-
-        
-
         if len(output) > 0:
             pattern = re.compile(r'<\|start_of_role\|>(.*?)<\|end_of_role\|>(.*?)(?=<\|start_of_role\|>|$)')
+            print(f"output-simple-english: {output[0]}")
             matches = pattern.findall(output[0])
-
+            print(f"matches: {matches}")
             result = {}
             for match in matches:
                 key = match[0]

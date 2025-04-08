@@ -6,6 +6,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { TypeAnimation } from "react-type-animation";
 import {toast} from "sonner"
 import {fetchData} from "@/lib/utils"
+import { useAppContext } from "@/context/AppContext";
+import { set } from "react-hook-form";
 
 const ignoredKeys = [
   // Control keys
@@ -154,6 +156,8 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
     const caretRef = useRef<HTMLDivElement>(null);
     const hiddenSpanRef = useRef<HTMLSpanElement>(null);
   
+    const { myAppContext, setMyAppContext } = useAppContext();  
+
     const setCaretPosition = () => {
       const caretPosition = inputRef.current?.value.length || 0;
       setTimeout(() => {
@@ -168,6 +172,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
       if (event.key == "Backspace")
         return setCurrentLine(currentLine.substring(0, currentLine?.length));
       if (event.key === "Enter") {
+        setMyAppContext({...myAppContext, aiInterfaceUserText:currentLine});
         processCommand(currentLine);
         return setCurrentLine("");
       }
@@ -192,7 +197,12 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
       fetchData(str)
         .then((data) => {
           foundCommand = data.command;
-          console.log(data);
+          if(foundCommand) {
+            setMyAppContext({...myAppContext, aiInterfaceResponseText:"command:" + foundCommand + " duration: "+ data.time_duration});
+            
+          } else {
+            setMyAppContext({...myAppContext, aiInterfaceResponseText:data});
+          }
         })
         .catch((error) => {
           console.error("Error fetching data:", error);

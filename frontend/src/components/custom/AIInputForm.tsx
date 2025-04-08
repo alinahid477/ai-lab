@@ -42,7 +42,7 @@ const formSchema = z.object({
 
 export function AIInputForm() {
   
-  const { setDataTable } = useAppContext();  
+  const { myAppContext, setMyAppContext } = useAppContext();  
   
   const form = useForm < z.infer < typeof formSchema >> ({
     resolver: zodResolver(formSchema),
@@ -61,7 +61,7 @@ export function AIInputForm() {
         const str="csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=100"
         fetchData(str)
           .then((data) => {
-            setDataTable(data);
+            setMyAppContext({...myAppContext, dataTable:data});
           })
           .catch((error) => {
             console.error("Error fetching data:", error);

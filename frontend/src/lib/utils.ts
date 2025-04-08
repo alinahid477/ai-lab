@@ -9,7 +9,6 @@ export function cn(...inputs: ClassValue[]) {
 export async function fetchData(apipath: string): Promise<any> {
   const host = "http://localhost:8000";
   const url = host + "/" + apipath;
-
   try {
     const response = await fetch(url);
     if (!response.ok) {
