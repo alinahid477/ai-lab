@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,16 @@ interface Message {
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
-	const { myAppContext} = useAppContext();
+  const { myAppContext} = useAppContext();
 
-	const [isThinking, setIsThinking] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
+  const divRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (divRef.current) {
+      // Scroll to the bottom of the div every time the component re-renders
+      divRef.current.scrollTop = divRef.current.scrollHeight;
+    }
+  }, [messages]);  // Trigger the effect when `messages` changes
 
   const sendMessage = (textInput: string, type: string) => {
     // if (!textInput.trim()) return;
@@ -70,7 +77,7 @@ const ChatInterface: React.FC = () => {
     <Card className="w-full max-w-auto">
         <div className="p-4 flex flex-col">
         <h1 className="text-2xl font-bold mb-4">AI Interface</h1>
-        <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px]">
+        <div ref={divRef} className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px]">
             {messages.map((msg) => (
             <div
                 key={msg.id}
