@@ -40,7 +40,7 @@ import {
 
 import samplelogs from "@/lib/sample-logs.json"
 
-import {fetchData} from "@/lib/utils"
+import {fetchData, processAction} from "@/lib/utils"
 import { errorToJSON } from "next/dist/server/render"
 
 const formSchema = z.object({
@@ -62,19 +62,17 @@ export function AIInputSheet() {
 			const logDuration = parseInt(values.ddlLogDuration, 10);
 			const action = values.ddlAction; 
 			setIsSheetOpen(false);
-			if (action === "rawlog") {
-				// const str="getapplogs?duration="+logDuration
-				const str="csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=100"
-				fetchData(str)
-					.then((data) => {
-						setMyAppContext({...myAppContext, dataTable: data});
-					})
-					.catch((error) => {
-						console.error("Error fetching data:", error);
-						toast.error("Failed to fetch data. Please try again.");
-					});
-			}
 			
+			processAction(action, {Past_duration: logDuration})
+				.then((data) => {
+					setMyAppContext({...myAppContext, dataTable: data});
+				})
+				.catch((error) => {
+					console.error("Error fetching data:", error);
+					toast.error("Failed to fetch data. Please try again.");
+				});
+			
+					
 			toast(
 				<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
 					<code className="text-black">{JSON.stringify(values, null, 2)}</code>

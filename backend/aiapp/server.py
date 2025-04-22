@@ -22,7 +22,7 @@ app.add_middleware(
 
 
 async def send_message_to_ws(message):
-    await utils.send_to_websocket({"type": "terminalinfo", "data": message})
+    utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
 
 @app.get("/csvlogs")
 async def get_csv_logs(filepath, page: int, rowcount: int):
@@ -32,7 +32,7 @@ async def get_csv_logs(filepath, page: int, rowcount: int):
             page = 0
         if rowcount is None:
             rowcount = 100
-        await utils.send_to_websocket({"type": "terminalinfo", "data": f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}."})
+        utils.send_to_websocket_sync({"type": "terminalinfo", "data": f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}."})
         # send_message_to_ws(f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}.")
         data = utils.display_logs(filepath, page, rowcount)
         return data
@@ -62,7 +62,7 @@ async def classify_csv(csv_file_path):
 async def download_file(filepath: str):
     try:
         if not os.path.exists(filepath):
-            await utils.send_to_websocket({"type": "terminalinfo", "data": f"Requested file {filepath} not found"})    
+            utils.send_to_websocket_sync({"type": "terminalinfo", "data": f"Requested file {filepath} not found"})    
             raise HTTPException(status_code=404, detail="File not found")
 
         return FileResponse(filepath, media_type='text/csv')

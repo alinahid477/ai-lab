@@ -70,7 +70,7 @@ const ChatInterface: React.FC = () => {
     <Card className="w-full max-w-auto">
         <div className="p-4 flex flex-col">
         <h1 className="text-2xl font-bold mb-4">AI Interface</h1>
-        <div className="flex-1 overflow-auto space-y-2 mb-4">
+        <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px]">
             {messages.map((msg) => (
             <div
                 key={msg.id}

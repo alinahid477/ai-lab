@@ -22,14 +22,14 @@ def send_to_websocket_sync(data):
     try:
         if isinstance(data, dict):
             data = json.dumps(data)
-        wsurl = os.getenv("WS_ENDPOINT")
-        
-        
+
+        wsurl = os.getenv("WS_ENDPOINT")        
         # Create a synchronous WebSocket connection
         ws = create_connection(wsurl)
+        print(f"utils: Sending to ws: {data}")
         ws.send(data)
         # print(f"Message sent: {data}")
-        ws.close()
+        # ws.close()
     except Exception as e:
         print(f"Error sending data to WebSocket: {e}")
 

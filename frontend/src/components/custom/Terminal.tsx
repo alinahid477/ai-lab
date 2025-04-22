@@ -211,10 +211,9 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
 
       
   
-      if (!foundCommand) {
+      if (foundCommand) {
         // newOutput.push(onCommandNotFound(cmd));
-        newOutput.push(<>command not found.</>);
-      } else {
+        // newOutput.push(<>command not found.</>);
         if (foundCommand.command === "clear") return setOutput([]);
         // if (foundCommand.result) newOutput.push(foundCommand.result);
         if (foundCommand.sideEffect) foundCommand.sideEffect();

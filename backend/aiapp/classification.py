@@ -9,7 +9,7 @@ import utils
 
 def classify_using_csv(csv_file):
 
-    utils.send_to_websocket(f"classifying using datafile: {csv_file}")
+    utils.send_to_websocket_sync(f"classifying using datafile: {csv_file}")
     test_df = pd.read_csv(csv_file)
     return classify(test_df)
 
@@ -19,9 +19,9 @@ def classify(test_df):
     onnx_session = ort.InferenceSession("/aiapp/models/myclassifier/1/log_classifier.onnx")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     
-    utils.send_to_websocket(f"Classifying using model: all-MiniLM-L6-v2 from:/aiapp/models/myclassifier/1/log_classifier.onnx")
+    utils.send_to_websocket_sync(f"Classifying using model: all-MiniLM-L6-v2 from:/aiapp/models/myclassifier/1/log_classifier.onnx")
     row_count = len(test_df)
-    utils.send_to_websocket(f"Total rows to classify: {row_count}")
+    utils.send_to_websocket_sync(f"Total rows to classify: {row_count}")
     
     test_df['classification'] = ''
 

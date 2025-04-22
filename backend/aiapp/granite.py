@@ -81,7 +81,11 @@ class SentenceAnalysis(BaseModel):
     followup: str
     time_duration: str
     file: str
-    confidence_score: float
+    confidence_score: float = Field(
+        ge=0.0, 
+        le=1.0,
+        description="Confidence score between 0 and 1"
+    )
 
 
 cmd_model_path = "ibm-granite/granite-3.1-1b-a400m-base"
@@ -98,10 +102,10 @@ cmd_model = models.Transformers(cmd_llm, cmd_tokenizer)
 
 
 async def send_message_to_ws(message):
-    await utils.send_to_websocket({"type": "terminalinfo", "data": message})
+    utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
 
 async def get_intended_command(english_command):
-    prepared_commands = ["csvlogs", "kafkalogs", "classifylogs", "Summarizelogs"]
+    prepared_commands = ["logs", "csvlogs", "kafkalogs", "classifylogs", "summarizelogs"]
 
     await send_message_to_ws(f"Asking Granite to find command: \"{english_command}\"")
 
