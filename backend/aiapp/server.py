@@ -47,9 +47,9 @@ async def get_app_logs(duration: int):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/classifycsv")
-async def classify_csv(csv_file_path):
+async def classify_csv(filepath):
     try:
-        return classification.classify_and_display_from_csv(csv_file_path, 0, 100)
+        return classification.classify_and_display_from_csv(filepath, 0, 100)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -57,6 +57,15 @@ async def classify_csv(csv_file_path):
         # # Clean up if the file was saved
         # if os.path.exists("output.csv"):
         #     os.remove("output.csv")
+
+@app.get("/summarize")
+async def summarize(filepath):
+    try:
+        return granite.summarize_logs(filepath)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        print("Processed summarizing logs")
 
 @app.get("/downloadfile")
 async def download_file(filepath: str):
@@ -73,7 +82,7 @@ async def download_file(filepath: str):
 @app.get("/processcommand")
 async def process_english_command(command: str):
     try:
-        print(f"DEBUG x1 {command}")
+        print(f"Process english: {command}")
         return await granite.get_intended_command(command)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

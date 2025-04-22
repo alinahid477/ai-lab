@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sheet" 
 import { useState } from "react"
 import {toast} from "sonner"
-import {set, useForm} from "react-hook-form"
+import {useForm} from "react-hook-form"
 import {zodResolver} from "@hookform/resolvers/zod"
 import * as z from "zod"
 // import {cn} from "@/lib/utils"
@@ -40,7 +40,7 @@ import {
 
 import samplelogs from "@/lib/sample-logs.json"
 
-import {fetchData, processAction} from "@/lib/utils"
+import {processAction} from "@/lib/utils"
 import { errorToJSON } from "next/dist/server/render"
 
 const formSchema = z.object({
@@ -63,7 +63,7 @@ export function AIInputSheet() {
 			const action = values.ddlAction; 
 			setIsSheetOpen(false);
 			
-			processAction(action, {Past_duration: logDuration})
+			processAction(action, {duration: logDuration})
 				.then((data) => {
 					setMyAppContext({...myAppContext, dataTable: data});
 				})

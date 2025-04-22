@@ -1,6 +1,5 @@
 from kafka import KafkaConsumer, TopicPartition
 import json
-import time
 from datetime import datetime, timedelta
 import pandas as pd
 import os
@@ -101,11 +100,18 @@ async def get_logs(topic, duration):
     return df
 
 
+
+
+
 async def dataframe_to_csv (df, fileprefix):
-    filename = f"/tmp/{fileprefix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+    filename = f"/tmp/logs/{fileprefix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
     await send_message_to_ws(f"Saving logs to file: {filename}")
     df.to_csv(filename, index=False)
     await send_message_to_ws(f"file {filename} saved successfully.")
+    try:
+        utils.cleanup()
+    except Exception as e:
+        print(f"Cleanup exception: {e}")
     return {"filename": filename}
 
 

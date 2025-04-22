@@ -1,10 +1,10 @@
 import pandas as pd
-import asyncio
 import websockets
 import os
 import json
 from websocket import create_connection
-
+import glob
+import time
 
 async def send_to_websocket(data):
     try:
@@ -94,6 +94,36 @@ def get_json(df_ittr, filepath, page, rowcount):
         except Exception as e:
             print(f"Error processing row {index}: {e}")
     return result
+
+
+
+def cleanup():
+  # Set the directory and the max allowed files
+  log_dir = "/tmp/logs"
+  max_files = 15
+
+  # Get a list of all files in the directory
+  files = glob.glob(os.path.join(log_dir, '*'))
+
+  # Only proceed if the number of files exceeds the max
+  if len(files) > max_files:
+      # Sort files by modification time (oldest first)
+      files.sort(key=os.path.getmtime)
+
+      # Determine how many files to delete
+      files_to_delete = files[:len(files) - max_files]
+      count=0
+      for file_path in files_to_delete:
+          if(count > 16):
+              break
+          else:
+              count =+ 1
+          try:
+              os.remove(file_path)
+              print(f"Deleted: {file_path}")
+          except Exception as e:
+              print(f"Failed to delete {file_path}: {e}")
+
 
 if __name__ == '__main__':
     ret = display_logs("/tmp/test.csv", 0, 100)

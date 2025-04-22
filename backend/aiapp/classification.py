@@ -48,7 +48,7 @@ def classify(test_df):
 def dataframe_to_csv(df, filesuffix):
     dir=os.path.dirname(filesuffix)
     if dir is None or dir == "": 
-        dir="/tmp"
+        dir="/tmp/logs"
         filename = f"classified_{filesuffix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
     else: # this means I have provided the original unclassified csv file fullpath 
         filename = f"classified_{os.path.basename(filesuffix)}"

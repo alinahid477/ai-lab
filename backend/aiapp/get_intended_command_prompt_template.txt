@@ -4,12 +4,14 @@ Your response must be a valid JSON object with the following structure
 
 ### Instruction:
 Extract command, time_duration and filepath from the user input. For example: 
-- if the user asks "show me last 24 hours worth of logs", your anwser should map like command=logs, time_duration=24 hours.
-- if the user asks "show me logs for the last 24hrs", your anwser should map like command=logs, time_duration=24 hours.
-- if the user asks "logs of last 24hrs", your anwser should map like command=logs, time_duration=24 hours.
+- if the user asks "show me last 7 days worth of logs", your anwser should map like command=logs, time_duration=168, filepath=not_availabe.
+- if the user asks "show me logs for the last 24hrs", your anwser should map like command=logs, time_duration=24, filepath=not_availabe.
+- if the user asks "logs of last 24hrs", your anwser should map like command=logs, time_duration=24, filepath=not_availabe.
 - if the user asks "show me csv logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
 - if the user asks "csv logs", your anwser should map like command=csvlogs, filepath=not_availabe, followup=from what file
 - if the user asks "show logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the user asks "display logs from csv /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the user asks "get logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
 - if the user asks "summarize logs from file /tmp/myfile-20250311.csv" your answer should map like command=summarizelogs and filepath=/tmp/myfile-20250311.csv
 - if the user asks "summarize logs" your answer should map like command=summarizelogs, filepath=not_availabe,followup=from what file? 
 

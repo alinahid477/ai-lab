@@ -1,19 +1,21 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Play } from "lucide-react";
+import { toast } from "sonner"
 import { useAppContext } from "@/context/AppContext";
+import {processAction} from "@/lib/utils"
 interface Message {
-  id: number;
-  role: "user" | "assistant";
+  id: string;
+  role: "user" | "assistant" | "command";
   content: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data?: Record<string, any>;
 }
 
 const ChatInterface: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
-  const { myAppContext} = useAppContext();
+  const { myAppContext, setMyAppContext} = useAppContext();
 
   const [isThinking, setIsThinking] = useState(false);
   const divRef = useRef<HTMLDivElement | null>(null);
@@ -29,7 +31,7 @@ const ChatInterface: React.FC = () => {
 
 		if (type === "user") {
 			const newMessage: Message = {
-				id: Date.now(),
+				id: `${Date.now()}_user`,
 				role: "user",
 				content: `${textInput}`,
 			};
@@ -37,17 +39,27 @@ const ChatInterface: React.FC = () => {
 			setMessages((prev) => [...prev, newMessage]);
 			// setInput("");
 			setIsThinking(true);
-		}
-
-		if (type === "assistant") {
+		} else if (type === "assistant") {
 			const assistantReply: Message = {
-				id: Date.now() + 1,
+				id: `${Date.now()}_assistant`,
 				role: "assistant",
 				content: `${textInput}`,
 			};
 			setMessages((prev) => [...prev, assistantReply]);
 			setIsThinking(false);
+		} else if (type === "command") {
+      const jsonObj = JSON.parse(textInput.replace("command:", "").trim())
+      const assistantReply: Message = {
+        id: `${Date.now()}_command`,
+        role: "command",
+        content: `<b>command:</b> ${jsonObj.command}<br/><b>file:</b> ${jsonObj.filepath}<br/><b>duration:</b> ${jsonObj.time_duration}`,
+        data: jsonObj,
+      };
+			setMessages((prev) => [...prev, assistantReply]);
+			setIsThinking(false);
 		}
+
+
     // setTimeout(() => {
       
     // }, 500);
@@ -63,15 +75,51 @@ const ChatInterface: React.FC = () => {
 
 	useEffect(() => {
 		if (myAppContext && myAppContext.aiInterfaceResponseText) {
-			sendMessage(myAppContext.aiInterfaceResponseText, "assistant");
+      if (myAppContext.aiInterfaceResponseText.startsWith("command:")) {
+        // Handle command logic here if needed
+        sendMessage(myAppContext.aiInterfaceResponseText, "command");
+      } else {
+        sendMessage(myAppContext.aiInterfaceResponseText, "assistant");
+      }
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [myAppContext.aiInterfaceResponseText]);
 
 	useEffect(() => {
 		if (myAppContext && myAppContext.aiInterfaceUserText) {
 			sendMessage(myAppContext.aiInterfaceUserText, "user");
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [myAppContext.aiInterfaceUserText]);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const doExecute = (data: any) => {
+    try {
+      console.log(data)
+			const duration = parseInt(data.time_duration);
+      const filepath = data.filepath;
+			const action = data.command;
+			console.log(duration, filepath, action)
+			processAction(action, {duration: duration, filepath:filepath})
+				.then((data) => {
+					setMyAppContext({...myAppContext, dataTable: data});
+				})
+				.catch((error) => {
+					console.error("Error fetching data:", error);
+					toast.error("Failed to fetch data. Please try again.");
+				});
+			
+					
+			toast(
+				<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+					<code className="text-black">{JSON.stringify(data)}</code>
+				</pre>
+			);
+		} catch (error) {
+			console.error("Form submission error", error);
+			toast.error("Failed to submit the form. Please try again.");
+		}
+  };
 
   return (
     <Card className="w-full max-w-auto">
@@ -80,14 +128,24 @@ const ChatInterface: React.FC = () => {
         <div ref={divRef} className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px]">
             {messages.map((msg) => (
             <div
-                key={msg.id}
-                className={`p-3 rounded-2xl shadow-sm max-w-[80%] ${
-                msg.role === "user"
-                    ? "bg-blue-100 self-end text-right pl-4 ml-10"
-                    : "bg-gray-100 self-start text-left"
-                }`}
+              key={msg.id}
+              className={`p-3 rounded-2xl shadow-sm max-w-[80%] ${
+              msg.role === "user"
+                ? "bg-blue-100 self-end text-right pl-4 ml-10"
+                : "bg-gray-100 self-start text-left"
+              }`}
             >
-                {msg.content}
+              
+              {msg.data ? (
+                <>
+                  <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+                  <Button variant="outline" size="icon" onClick={() => doExecute(msg.data)}>
+                    <Play />
+                  </Button>
+                </>
+              ):
+                msg.content
+              }
             </div>
             ))}
 						{isThinking && (

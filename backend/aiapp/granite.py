@@ -5,7 +5,7 @@ from outlines import models, generate
 from pydantic import BaseModel, Field
 import utils
 import re
-
+import pandas as pd
 class SecurityEvent(BaseModel):
     # The reasoning for why this event is relevant.
     reasoning: str
@@ -79,8 +79,17 @@ class CommandParameter(BaseModel):
 class SentenceAnalysis(BaseModel):
     command: str
     followup: str
-    time_duration: str
-    file: str
+    time_duration: int = Field(
+        description=(
+            "Time duration in hours. "
+            "Convert any duration expressed in other units (e.g., days) to hours. "
+            "For example, '7 days' should be returned as 168. "
+            "Return only the numeric value, without units. "
+            "Must be a single integer value."
+            "Do not include units like 'hours' or 'hr'."
+        )
+    )
+    filepath: str
     confidence_score: float = Field(
         ge=0.0, 
         le=1.0,
@@ -102,7 +111,53 @@ cmd_model = models.Transformers(cmd_llm, cmd_tokenizer)
 
 
 async def send_message_to_ws(message):
-    utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
+  utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
+
+
+
+async def summarize_logs(logs_csv_file_path):
+  prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
+
+  with open(prompt_template_path, "r") as file:
+      prompt_template = file.read()
+
+
+  df = pd.read_csv(logs_csv_file_path)
+  # Create a list to store the text lines
+  text_lines = []
+
+  # Iterate over each row in the DataFrame
+  for index, row in df.iterrows():
+      action = "threw" if row['classification'] != "info" else "output"
+      text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
+      text_lines.append(text_line)
+
+  # # Print the first 5 lines of text_lines
+  # for line in text_lines[:5]:
+  #     print(line)
+
+  chat = prompt_template.format(
+                  log_type="application",
+                  logs=text_lines,
+                  model_schema=LogAnalysis.model_json_schema(),
+                  stress_prompt="""You are a computer security intern that's really stressed out. 
+                  
+                  Use "um" and "ah" a lot.""",
+              )
+
+  input_tokens = cmd_tokenizer(chat, return_tensors="pt").to(device)
+  # generate output tokens
+  output = cmd_model.generate(**input_tokens, 
+                          max_new_tokens=100)
+  # decode output tokens into text
+  output = cmd_tokenizer.batch_decode(output)
+  # print output
+  print(f"summary: {output}")
+
+  return output
+
+
+
 
 async def get_intended_command(english_command):
     prepared_commands = ["logs", "csvlogs", "kafkalogs", "classifylogs", "summarizelogs"]
@@ -131,7 +186,7 @@ async def get_intended_command(english_command):
                         max_new_tokens=100)
         output = chat_tokenizer.batch_decode(output)
         if len(output) > 0:
-            pattern = re.compile(r'<\|start_of_role\|>(.*?)<\|end_of_role\|>(.*?)(?=<\|start_of_role\|>|$)')
+            pattern = re.compile(r'<\|start_of_role\|>(.*?)<\|end_of_role\|>(.*?)(?=<\|start_of_role\|>|$)', re.DOTALL)
             print(f"output-simple-english: {output[0]}")
             matches = pattern.findall(output[0])
             print(f"matches: {matches}")

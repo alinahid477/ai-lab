@@ -198,7 +198,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
         .then((data) => {
           foundCommand = data.command;
           if(foundCommand) {
-            setMyAppContext({...myAppContext, aiInterfaceResponseText:"command:" + foundCommand + " duration: "+ data.time_duration});
+            setMyAppContext({...myAppContext, aiInterfaceResponseText:"command: " + JSON.stringify(data)});
             
           } else {
             setMyAppContext({...myAppContext, aiInterfaceResponseText:data});
