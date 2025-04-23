@@ -105,9 +105,10 @@ chat_tokenizer = AutoTokenizer.from_pretrained(chat_model_path, input_tokens=204
 chat_model = models.Transformers(chat_llm, chat_tokenizer)
 
 cmd_llm = AutoModelForCausalLM.from_pretrained(cmd_model_path, device_map="cpu")
-cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, input_tokens=2048)
-cmd_model = models.Transformers(cmd_llm, cmd_tokenizer)
-
+# cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, input_tokens=2048)
+cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, trust_remote_code=True)
+# cmd_model = models.Transformers(cmd_llm, cmd_tokenizer)
+cmd_model = AutoModelForCausalLM.from_pretrained(cmd_model_path, device_map=device, trust_remote_code=True)
 
 
 async def send_message_to_ws(message):
@@ -116,13 +117,15 @@ async def send_message_to_ws(message):
 
 
 async def summarize_logs(logs_csv_file_path):
+  print(f"HERE 0 {logs_csv_file_path}")
   prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
 
   with open(prompt_template_path, "r") as file:
-      prompt_template = file.read()
+    prompt_template = file.read()
 
-
+  print(f"HERE 1 {logs_csv_file_path}")
   df = pd.read_csv(logs_csv_file_path)
+  print(f"HERE 2")
   # Create a list to store the text lines
   text_lines = []
 
@@ -131,7 +134,7 @@ async def summarize_logs(logs_csv_file_path):
       action = "threw" if row['classification'] != "info" else "output"
       text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
       text_lines.append(text_line)
-
+  print(f"HERE 3")
   # # Print the first 5 lines of text_lines
   # for line in text_lines[:5]:
   #     print(line)
@@ -144,11 +147,16 @@ async def summarize_logs(logs_csv_file_path):
                   
                   Use "um" and "ah" a lot.""",
               )
-
+  print(f"HERE 4.1")
   input_tokens = cmd_tokenizer(chat, return_tensors="pt").to(device)
-  # generate output tokens
-  output = cmd_model.generate(**input_tokens, 
+  print(f"HERE 4.2 {input_tokens}")
+  try:
+    # generate output tokens
+    output = cmd_model.generate(**input_tokens, 
                           max_new_tokens=100)
+  except Exception as e:
+    print(e)
+  print(f"HERE 4.3")
   # decode output tokens into text
   output = cmd_tokenizer.batch_decode(output)
   # print output

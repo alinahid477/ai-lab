@@ -61,7 +61,7 @@ def display_logs_from_csv(filepath, page, rowcount):
             dfittr = df.iterrows()
         else:
             skip = page*rowcount        
-            df = pd.read_csv(filepath, skiprows=skip, names=["timestamp", "namespace_name","app_name","level","log_type","message"])
+            df = pd.read_csv(filepath, skiprows=skip, names=["timestamp", "namespace_name","app_name","level","log_type","message", "classification"])
             dfittr = df.head(rowcount).iterrows()
         jsonData = get_json(dfittr, filepath, page, rowcount)
         jsonData['totalrow'] = totalrow

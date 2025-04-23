@@ -3,18 +3,21 @@ Your response must be a valid JSON object with the following structure
 {model_schema}
 
 ### Instruction:
-Extract command, time_duration and filepath from the user input. For example: 
-- if the user asks "show me last 7 days worth of logs", your anwser should map like command=logs, time_duration=168, filepath=not_availabe.
-- if the user asks "show me logs for the last 24hrs", your anwser should map like command=logs, time_duration=24, filepath=not_availabe.
-- if the user asks "logs of last 24hrs", your anwser should map like command=logs, time_duration=24, filepath=not_availabe.
-- if the user asks "show me csv logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
-- if the user asks "csv logs", your anwser should map like command=csvlogs, filepath=not_availabe, followup=from what file
-- if the user asks "show logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
-- if the user asks "display logs from csv /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
-- if the user asks "get logs from file /tmp/myfile-20250311.csv", your anwser should map like command=csvlogs, filepath=/tmp/myfile-20250311.csv
-- if the user asks "summarize logs from file /tmp/myfile-20250311.csv" your answer should map like command=summarizelogs and filepath=/tmp/myfile-20250311.csv
-- if the user asks "summarize logs" your answer should map like command=summarizelogs, filepath=not_availabe,followup=from what file? 
-
+Extract command, time_duration and filepath from the user input. 
+Do not modify the filepath. Extract the filepath exactly as the user specifies it. If the user does not mention any file or filepath do not provide any randomly generated filepath. Instead provide "not_availabe" in the filepath field. 
+Similarly, if the user do not mention any time related information do not randomly generate time_duration. Instead provide 0 for time_duration field.
+For example: 
+- if the user asks "show me last 7 days worth of logs", your answer should extract information such as command=logs, time_duration=168, filepath=not_availabe.
+- if the user asks "show me logs for the last 24hrs", your answer should extract information such as command=logs, time_duration=24, filepath=not_availabe.
+- if the user asks "logs of last 24hrs", your answer should extract information such as command=logs, time_duration=24, filepath=not_availabe.
+- if the user asks "show me csv logs from file /tmp/myfile-20250311.csv", your answer should extract information such as command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the user asks "csv logs", your answer should extract information such as command=csvlogs, filepath=not_availabe, followup=from what file
+- if the user asks "show logs from file /tmp/myfile-20250311.csv", your answer should extract information such as command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the user asks "display logs from csv /tmp/myfile-20250311.csv", your answer should extract information such as command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the user asks "get logs from file /tmp/myfile-20250311.csv", your answer should extract information such as command=csvlogs, filepath=/tmp/myfile-20250311.csv
+- if the user asks "summarize logs from file /tmp/myfile-20250311.csv" your answer should extract information such as command=summarizelogs and filepath=/tmp/myfile-20250311.csv
+- if the user asks "summarize logs" your answer should extract information such as command=summarizelogs, filepath=not_availabe,followup=from what file? 
+- if the user asks "classify logs from file /tmp/logs/myappocp_202503182003.csv" your answer should extract information such as command=classifylogs, filepath=/tmp/logs/myappocp_202503182003.csv, time_duration=0 
 
 Here is the list of all possible commands: 
 - csvlogs

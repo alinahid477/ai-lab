@@ -61,7 +61,8 @@ async def classify_csv(filepath):
 @app.get("/summarize")
 async def summarize(filepath):
     try:
-        return granite.summarize_logs(filepath)
+        print(f" DEBUG 111 {filepath}")
+        return await granite.summarize_logs(filepath)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:

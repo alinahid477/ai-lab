@@ -38,7 +38,7 @@ export async function processAction(action: string, paramsKeyValueObj: object): 
     if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
       str = `classifycsv?filepath=${paramsKeyValueObj["filepath"]}`;
     }
-  } else if(action === "summarize" || action === "logsummary") {
+  } else if(action === "summarizelogs" || action === "summarize" || action === "logsummary") {
     if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
       str = `summarize?filepath=${paramsKeyValueObj["filepath"]}`;
     }

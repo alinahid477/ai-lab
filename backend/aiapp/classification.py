@@ -7,6 +7,9 @@ from datetime import datetime, timedelta
 import utils
 
 
+def send_message_to_ws(message):
+    utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
+
 def classify_using_csv(csv_file):
 
     utils.send_to_websocket_sync(f"classifying using datafile: {csv_file}")
@@ -19,9 +22,9 @@ def classify(test_df):
     onnx_session = ort.InferenceSession("/aiapp/models/myclassifier/1/log_classifier.onnx")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     
-    utils.send_to_websocket_sync(f"Classifying using model: all-MiniLM-L6-v2 from:/aiapp/models/myclassifier/1/log_classifier.onnx")
-    row_count = len(test_df)
-    utils.send_to_websocket_sync(f"Total rows to classify: {row_count}")
+    utils.send_to_websocket_sync(f"Embedding using model: all-MiniLM-L6-v2 and classifying using trained custom model:/aiapp/models/myclassifier/1/log_classifier.onnx")
+    total_rows = len(test_df)
+    utils.send_to_websocket_sync(f"Total rows to classify: {total_rows}")
     
     test_df['classification'] = ''
 
@@ -42,7 +45,9 @@ def classify(test_df):
             test_predicted_label = test_probabilities[0][0]
             # print(test_log, "->", test_predicted_label, "-->", test_probabilities)
         test_df.at[index, 'classification'] = test_predicted_label
-
+        if (index + 1) % 50 == 0 or (index + 1) == total_rows:
+            send_message_to_ws(f"{index + 1} out of {total_rows} rows processed...")
+            print(f"{index + 1} out of {total_rows} rows processed...")
     return test_df
 
 def dataframe_to_csv(df, filesuffix):
