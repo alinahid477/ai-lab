@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    opendatahub.io/recommended-accelerators: '["nvidia.com/gpu"]'
+  name: ollama
+  namespace: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: ollama
+  template:
+    metadata:
+      labels:
+        name: ollama
+    spec:
+      containers:
+      - name: ollama
+        image: ollama/ollama:latest
+        volumeMounts:
+          - mountPath: /root/.ollama
+            name: ollama-storage
+        ports:
+        - name: http
+          containerPort: 11434
+          protocol: TCP
+        env:
+        - name: PRELOAD_MODELS
+          value: "granite3-dense:8b"
+        - name: OLLAMA_KEEP_ALIVE
+          value: "12h"
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "for model in $PRELOAD_MODELS; do ollama run $model \"\"; done"]
+      volumes:
+      - name: ollama-storage
+        persistentVolumeClaim:
+          claimName: ollama-data
+      # - hostPath:
+      #     path: /opt/ollama
+      #     type: DirectoryOrCreate
+      #   name: ollama-storage

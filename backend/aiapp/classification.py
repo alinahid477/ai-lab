@@ -19,7 +19,7 @@ def classify_using_csv(csv_file):
 
 def classify(test_df):
 
-    onnx_session = ort.InferenceSession("/aiapp/models/myclassifier/1/log_classifier.onnx")
+    onnx_session = ort.InferenceSession("/mnt/models/logclassifier/1/model.onnx")
     model = SentenceTransformer('all-MiniLM-L6-v2')
     
     utils.send_to_websocket_sync(f"Embedding using model: all-MiniLM-L6-v2 and classifying using trained custom model:/aiapp/models/myclassifier/1/log_classifier.onnx")
