@@ -100,15 +100,16 @@ class SentenceAnalysis(BaseModel):
 cmd_model_path = "ibm-granite/granite-3.1-1b-a400m-base"
 chat_model_path = "ibm-granite/granite-3.0-2b-instruct"
 device = "cuda" if torch.cuda.is_available() else "cpu"
-chat_llm = AutoModelForCausalLM.from_pretrained(chat_model_path, device_map="cpu")
+print(device)
+chat_llm = AutoModelForCausalLM.from_pretrained(chat_model_path, device_map=device)
 chat_tokenizer = AutoTokenizer.from_pretrained(chat_model_path, input_tokens=2048)
 chat_model = models.Transformers(chat_llm, chat_tokenizer)
 
-cmd_llm = AutoModelForCausalLM.from_pretrained(cmd_model_path, device_map="cpu")
-# cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, input_tokens=2048)
-cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, trust_remote_code=True)
-# cmd_model = models.Transformers(cmd_llm, cmd_tokenizer)
-cmd_model = AutoModelForCausalLM.from_pretrained(cmd_model_path, device_map=device, trust_remote_code=True)
+cmd_llm = AutoModelForCausalLM.from_pretrained(cmd_model_path, device_map=device)
+cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, input_tokens=2048)
+# cmd_tokenizer = AutoTokenizer.from_pretrained(cmd_model_path, trust_remote_code=True)
+cmd_model = models.Transformers(cmd_llm, cmd_tokenizer)
+# cmd_model = AutoModelForCausalLM.from_pretrained(cmd_model_path, device_map=device, trust_remote_code=True)
 
 
 async def send_message_to_ws(message):
@@ -117,15 +118,15 @@ async def send_message_to_ws(message):
 
 
 async def summarize_logs(logs_csv_file_path):
-  print(f"HERE 0 {logs_csv_file_path}")
+  # print(f"HERE 0 {logs_csv_file_path}")
   prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
 
   with open(prompt_template_path, "r") as file:
     prompt_template = file.read()
 
-  print(f"HERE 1 {logs_csv_file_path}")
+  # print(f"HERE 1 {logs_csv_file_path}")
   df = pd.read_csv(logs_csv_file_path)
-  print(f"HERE 2")
+  # print(f"HERE 2")
   # Create a list to store the text lines
   text_lines = []
 
@@ -134,31 +135,36 @@ async def summarize_logs(logs_csv_file_path):
       action = "threw" if row['classification'] != "info" else "output"
       text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
       text_lines.append(text_line)
-  print(f"HERE 3")
+  # print(f"HERE 3")
   # # Print the first 5 lines of text_lines
   # for line in text_lines[:5]:
   #     print(line)
-
-  chat = prompt_template.format(
+  text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
+  prompt = prompt_template.format(
                   log_type="application",
-                  logs=text_lines,
+                  logs=text_lines_str,
                   model_schema=LogAnalysis.model_json_schema(),
                   stress_prompt="""You are a computer security intern that's really stressed out. 
                   
                   Use "um" and "ah" a lot.""",
               )
-  print(f"HERE 4.1")
-  input_tokens = cmd_tokenizer(chat, return_tensors="pt").to(device)
-  print(f"HERE 4.2 {input_tokens}")
+  # print(f"HERE 4.1")
+  # input_tokens = cmd_tokenizer(prompt, return_tensors="pt").to(device)
+  print(f"HERE 4.2")
+  output = {}
   try:
     # generate output tokens
-    output = cmd_model.generate(**input_tokens, 
-                          max_new_tokens=100)
+    # output = cmd_model.generate(**input_tokens, 
+    #                       max_new_tokens=100)
+    generator = generate.json(cmd_model, LogAnalysis)
+    print(generator)
+    output = list(generator(prompt))
+    print("xxxxxxxxxxx")
   except Exception as e:
     print(e)
   print(f"HERE 4.3")
   # decode output tokens into text
-  output = cmd_tokenizer.batch_decode(output)
+  # output = cmd_tokenizer.batch_decode(output)
   # print output
   print(f"summary: {output}")
 

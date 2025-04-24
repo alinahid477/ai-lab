@@ -20,4 +20,6 @@ onnxruntime==1.21.0
 websockets==15.0.1
 websocket-client==1.8.0
 accelerate>=1.5.2
-outlines>=0.47.2
+outlines>=0.2.1
+boto3==1.35.55 
+botocore==1.35.55
