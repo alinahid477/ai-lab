@@ -56,3 +56,4 @@ frontend/.next/*
 
 backend/aiapp/__pycache__
 training/tmp.txt
+training/ollama/granite-3.3-2b-instruct-Q4_K_M.gguf
