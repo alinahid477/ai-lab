@@ -1,9 +1,15 @@
 Below (in the input section) is a command from user that describes a task, paired with two or more inputs that provides further context to the command. 
-Your response must be a valid JSON object with the following structure
+Your response must only be a valid JSON object with the following schema
 {model_schema}
+
+Your output must only be 1 json object as per the schema above. Do not provide sample input and response. Do not output additional texts.
+You should provide explanation in the designated "explanation" field of the json object.
+You also should provide a confidence score for your answer. If your confidence is lower than 0.7 then you can generate a follow up question such as: "I'm sorry, what do you mean?". Your follow up question shold be bound to the "followup" field in the schema. If your confidence is higher than 0.7 then no need to ask any followup question. 
+You are allowed to engage in conversational chit-chat using relevant follow up questions leveraging the "followup" field in the json object.
 
 ### Instruction:
 Extract command, time_duration and filepath from the user input. 
+The unit for time_duration must be in hours. If user mentions other units such as days, months, years etc you must convert that into hours. Do not apply any context when converting time_duration into hours. Simply convert based on this information: 24 hours in 1 day, 7 days in 1 week, 4.35 weeks in 1 month, 12 months in 1 year. For example: 3 months = 2192 hours, 7 days = 168 hours etc.
 Do not modify the filepath. Extract the filepath exactly as the user specifies it. If the user does not mention any file or filepath do not provide any randomly generated filepath. Instead provide "not_availabe" in the filepath field. 
 Similarly, if the user do not mention any time related information do not randomly generate time_duration. Instead provide 0 for time_duration field.
 For example: 
@@ -19,19 +25,14 @@ For example:
 - if the user asks "summarize logs" your answer should extract information such as command=summarizelogs, filepath=not_availabe,followup=from what file? 
 - if the user asks "classify logs from file /tmp/logs/myappocp_202503182003.csv" your answer should extract information such as command=classifylogs, filepath=/tmp/logs/myappocp_202503182003.csv, time_duration=0 
 
-Here is the list of all possible commands: 
+Possible commands are: 
 - csvlogs
 - logs
 - kafkalogs
 - classifylogs
 - summarizelogs
 
-You also should provide a confidence score for your answer. If your confidence is lower than 0.7 then you can generate a follow up question such as: "I'm sorry, what do you mean?". Your follow up question shold be bound to the "followup" field in the schema. If your confidence is higher than 0.7 then no need to ask any followup question. 
-
-You are allowed to engage in conversational chit-chat using relevant "followup" questions.
-
 ### Input:
 "{query}"
-
 
 ### Response (valid JSON only): 

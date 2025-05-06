@@ -11,9 +11,14 @@
 			"extensions": [
 				"ms-python.python",
 				"ms-toolsai.jupyter"
-			]
+			],
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash"
+			}
 		}
 	},
+	"runArgs": ["--add-host=host.docker.internal:host-gateway"],
+	
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 
