@@ -1,0 +1,88 @@
+version: 3
+task_description: >
+  Extract structured metadata from natural language log interrogation commands.
+  The metadata includes command type, time duration in hours, and file path.
+  If any information is missing, denote it as "not_available".
+created_by: your_github_username
+seed_examples:
+  - context: |
+      This skill focuses on interpreting natural language commands related to log interrogation.
+      The goal is to extract structured metadata: command, time_duration (in hours), and filepath.
+      If any of these elements are not specified in the command, they should be marked as "not_available".
+      For instance, if the command is "show me last 7 days worth of logs", the extracted metadata would be:
+      command=logs, time_duration=168, filepath=not_available.
+      Refer to the document at https://github.com/test/lotsofcommand.md for more examples.
+    questions_and_answers:
+      - question: |
+          show me last 7 days worth of logs
+        answer: |
+          command: logs
+          time_duration: 168
+          filepath: not_available
+      - question: |
+          show me logs for the last 24hrs
+        answer: |
+          command: logs
+          time_duration: 24
+          filepath: not_available
+      - question: |
+          logs of last 24hrs
+        answer: |
+          command: logs
+          time_duration: 24
+          filepath: not_available
+      - question: |
+          show me csv logs from file /tmp/myfile-20250311.csv
+        answer: |
+          command: csvlogs
+          time_duration: not_available
+          filepath: /tmp/myfile-20250311.csv
+      - question: |
+          csv logs
+        answer: |
+          command: csvlogs
+          time_duration: not_available
+          filepath: not_available
+          followup: from what file?
+      - question: |
+          show logs from file /tmp/myfile-20250311.csv
+        answer: |
+          command: csvlogs
+          time_duration: not_available
+          filepath: /tmp/myfile-20250311.csv
+      - question: |
+          display logs from csv /tmp/myfile-20250311.csv
+        answer: |
+          command: csvlogs
+          time_duration: not_available
+          filepath: /tmp/myfile-20250311.csv
+      - question: |
+          get logs from file /tmp/myfile-20250311.csv
+        answer: |
+          command: csvlogs
+          time_duration: not_available
+          filepath: /tmp/myfile-20250311.csv
+      - question: |
+          summarize logs from file /tmp/myfile-20250311.csv
+        answer: |
+          command: summarizelogs
+          time_duration: not_available
+          filepath: /tmp/myfile-20250311.csv
+      - question: |
+          summarize logs
+        answer: |
+          command: summarizelogs
+          time_duration: not_available
+          filepath: not_available
+          followup: from what file?
+      - question: |
+          classify logs from file /tmp/logs/myappocp_202503182003.csv
+        answer: |
+          command: classifylogs
+          time_duration: not_available
+          filepath: /tmp/logs/myappocp_202503182003.csv
+document:
+  repo: https://github.com/juliadenham/Summit_knowledge
+  commit: 0a1f2672b9b90582e6115333e3ed62fd628f1c0f
+  patterns:
+    - intellilogs-commands-variations.md

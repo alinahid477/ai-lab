@@ -5,15 +5,16 @@ import asyncio
 import re
 import json
 
-async def callAI(prompt, keep_alive = "5m"):
+async def callAI(prompt, format = "json", keep_alive = "5m"):
   url = "http://host.docker.internal:11434/api/generate"
   payload = {
-      "model": "granite-3.3-2b-instruct",
-      "prompt": prompt,
-      "stream": False,
-      "format": "json",
-      "keep_alive": keep_alive
-  }
+        "model": "granite-3.3-2b-instruct",
+        "prompt": prompt,
+        "stream": False,
+        "keep_alive": keep_alive
+    }
+  if format == "json":
+    payload["format"] = "json"
 
   async with aiohttp.ClientSession() as session:
     async with session.post(url, json=payload) as response:
@@ -26,9 +27,11 @@ async def callAI(prompt, keep_alive = "5m"):
           
 
 async def send_message_to_ws(message):
+  print(f"**sending to ws: {message}")
   utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
 
 async def get_intended_command(english_command):
+  output = None
   prepared_commands = ["logs", "csvlogs", "kafkalogs", "classifylogs", "summarizelogs"]
 
   await send_message_to_ws(f"Asking Granite to find command: \"{english_command}\"")
@@ -42,20 +45,20 @@ async def get_intended_command(english_command):
           )
     
   try:
-    ai_response = await callAI(prompt, 0)
+    ai_response = await callAI(prompt, "json", "0m")
     # Assume `response_data` is your REST response dictionary
-    parsed_json_objects = []
-
     if "response" in ai_response:
       response_text = ai_response["response"]
       parsed_json = json.loads(response_text)
-      if parsed_json.command not in prepared_commands:
-        await send_message_to_ws(f"Invalid command: {parsed_json.command}. Must be one of {prepared_commands}")
+      await send_message_to_ws(f"Text extracted for command: {parsed_json}")
+      if parsed_json['command'] not in prepared_commands:
+        await send_message_to_ws(f"Invalid command: {parsed_json['command']}. Must be one of {prepared_commands}")
         await send_message_to_ws(f"Asking Granite to simply answer: \"{english_command}\"")
-        output = callAI(english_command)
-        print (output)
+        ai_response = await callAI(english_command, "text")
+        if "response" in ai_response:
+          output = ai_response["response"]
     else:
-      print("Key 'response' not found in response_data.")
+      output = parsed_json
 
     
   except Exception as e:
@@ -97,11 +100,11 @@ async def get_intended_command(english_command):
       # result = generator("Question: {english_command} Answer:", max_tokens=100)
       
       # await send_message_to_ws(f"response from Granite: {output}")
-  return ""
+  return output
   # utils.send_to_websocket({"type": "get_intended_command", "data": {output}})
 
 
 if __name__ == "__main__":
-  test_prompt = "get me last 5 months logs"
+  test_prompt = "tell me about openshift"
   response = asyncio.run(get_intended_command(test_prompt))
   print(response)
