@@ -8,8 +8,13 @@ https://github.com/cedricclyburn/las-vegas-gambling-knowledge/blob/main/biggest_
 
 https://github.com/instructlab/instructlab?tab=readme-ov-file#-creating-new-knowledge-or-skills-and-training-the-model
 
+**RHEL AI (this one looks good)**
+- https://www.redhat.com/en/blog/instructlab-tutorial-installing-and-fine-tuning-your-first-ai-model-part-1
+- https://www.redhat.com/en/blog/instructlab-tutorial-installing-and-fine-tuning-your-first-ai-model-part-2
 
-
+**more**
+- https://www.youtube.com/watch?v=eaia9MstLNs
+ 
 
 ```
 cd /workspace/ai-lab/instructlab
@@ -62,3 +67,21 @@ OR
 ilab data generate --model /home/dev/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf --endpoint-url https://granite-3-1-8b-instruct-w4a16-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1 --api-key ffaf3a383cf51ca345f7b5132b2c1f8f --taxonomy-path /workspaces/ai-lab/instructlab/taxonomy --output-dir /workspaces/ai-lab/instructlab/outputs/datasets --num-cpus 14
 ```
 
+
+
+
+train model
+
+before you train the model your must get 2 things:
+```
+ilab model download --repository instructlab/granite-7b-lab
+ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token>
+```
+
+```
+lab model train --data-path  /workspaces/ai-lab/instructlab/outputs/datasets/2025-05-08_214008/knowledge_train_msgs_2025-05-08T21_40_13.jsonl --pipeline=full --effective-batch-size=64 --max-batch-len=5000 --num-epochs 4 --model-path ibm-granite/granite-3.3-2b-instruct --tokenizer-dir instructlab/granite-7b-lab
+
+
+
+ilab model train --pipeline full --device cpu --num-epochs 4 --data-path /home/dev/ai-lab/instructlab/outputs/datasets/2025-05-08_214008
+```
