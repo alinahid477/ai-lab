@@ -7,7 +7,8 @@ WORKDIR /app
 ENV OLLAMA_CUDA=0
 
 COPY Modelfile .
-COPY granite-3.3-2b-instruct-Q4_K_M.gguf .
+# COPY granite-3.3-2b-instruct-Q4_K_M.gguf .
+COPY pytorch_model-Q4_K_M.gguf .
 COPY ollama-start.sh .
 RUN chmod +x ollama-start.sh
 # Mount a local directory containing your model

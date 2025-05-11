@@ -19,13 +19,17 @@ until curl -s http://localhost:11434 > /dev/null; do
   sleep 1
 done
 
+#granite-3.3-2b-instruct
+modelname=ilab-trained-granite-7b
+
 echo "Creating model from Modelfile..." && sleep 3
-ollama create granite-3.3-2b-instruct -f Modelfile
+# ollama create $modelname -f Modelfile
+ollama create $modelname -f Modelfile
 
 echo "Listing models under ollama..." && sleep 2
 ollama list
 
 sleep 2
-echo "Running model: granite-3.3-2b-instruct..."
-ollama run granite-3.3-2b-instruct
+echo "Running model: $modelname..."
+ollama run $modelname
 
