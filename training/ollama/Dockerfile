@@ -6,6 +6,7 @@ WORKDIR /app
 # Set environment variables to disable GPU (CPU mode)
 ENV OLLAMA_CUDA=0
 
+# COPY Modelfile.granite .
 COPY Modelfile .
 # COPY granite-3.3-2b-instruct-Q4_K_M.gguf .
 COPY pytorch_model-Q4_K_M.gguf .

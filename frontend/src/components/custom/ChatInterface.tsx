@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
 import { toast } from "sonner"
@@ -122,55 +122,86 @@ const ChatInterface: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-auto">
         <div className="p-4 flex flex-col">
-        <h1 className="text-2xl font-bold mb-4">AI Interface</h1>
-        <div ref={divRef} className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[300px]">
-            {messages.map((msg) => (
-            <div
-              key={msg.id}
-              className={`p-3 rounded-2xl shadow-sm max-w-[80%] ${
-              msg.role === "user"
-                ? "bg-blue-100 self-end text-right pl-4 ml-10"
-                : "bg-gray-100 self-start text-left"
-              }`}
-            >
-              
-              {msg.data ? (
-                <>
-                  <div dangerouslySetInnerHTML={{ __html: msg.content }} />
-                  <Button variant="outline" size="icon" onClick={() => doExecute(msg.data)}>
-                    <Play />
-                  </Button>
-                </>
-              ):
-                msg.content
-              }
+          {/* <div className="flex p-2 dark:bg-gray-100 bg-slate-100 rounded-tl-md rounded-tr-md h-10 items-center">
+            <div className="flex space-x-2 items-center">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
             </div>
-            ))}
-						{isThinking && (
-							<div className="flex items-center space-x-2">
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
-								<div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300"></div>
-							</div>
-						)}
+            <div className="text-center w-full font-bold text-slate-400 dark:text-gray-300 -ml-9">
+              AI Interface
+            </div>
+          </div> */}
+          <div ref={divRef} className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-[500px]">
+              {messages.map((msg) => (
+              <div
+                key={msg.id}
+                className={`p-5 rounded-2xl shadow-sm max-w-[80%] ${
+                msg.role === "user"
+                  ? "bg-blue-100 self-end text-right pl-4 ml-60"
+                  : "bg-gray-100 self-start text-left"
+                }`}
+              >
+                {msg.role !== "user" ? (
+                  <div className="flex items-start space-x-2">
+                    <Image
+                      className="dark:invert"
+                      src="/robot.svg"
+                      alt="Robot logo"
+                      width={54}
+                      height={9}
+                      priority
+                    />
+                    <div>
+                      {msg.data ? (
+                        <>
+                          <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+                          <Button variant="outline" size="icon" onClick={() => doExecute(msg.data)}>
+                            <Play />
+                          </Button>
+                        </>
+                      ) : (
+                        msg.content
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  msg.data ? (
+                    <>
+                      <div dangerouslySetInnerHTML={{ __html: msg.content }} />
+                      <Button variant="outline" size="icon" onClick={() => doExecute(msg.data)}>
+                        <Play />
+                      </Button>
+                    </>
+                  ) : (
+                    msg.content
+                  )
+                )}
+              </div>
+              ))}
+              {isThinking && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300"></div>
+                </div>
+              )}
+          </div>
+          {/* <Card className="p-2">
+              <CardContent className="flex items-center gap-2">
+              <Input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Type your message..."
+                  onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              />
+              <Button onClick={sendMessage}>
+                  <Send className="w-4 h-4" />
+              </Button>
+              </CardContent>
+          </Card> */}
         </div>
-        {/* <Card className="p-2">
-            <CardContent className="flex items-center gap-2">
-            <Input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Type your message..."
-                onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-            />
-            <Button onClick={sendMessage}>
-                <Send className="w-4 h-4" />
-            </Button>
-            </CardContent>
-        </Card> */}
-        </div>
-    </Card>
   );
 };
 

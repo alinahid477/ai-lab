@@ -3,11 +3,10 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 import os
 import classification
-import granite
+import getfromai02
 import kafka_extractor
 
 import utils
-import asyncio
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -62,7 +61,7 @@ async def classify_csv(filepath):
 async def summarize(filepath):
     try:
         print(f" DEBUG 111 {filepath}")
-        return await granite.summarize_logs(filepath)
+        return await getfromai02.summarize_logs(filepath)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
@@ -84,7 +83,7 @@ async def download_file(filepath: str):
 async def process_english_command(command: str):
     try:
         print(f"Process english: {command}")
-        return await granite.get_intended_command(command)
+        return await getfromai02.get_intended_command(command)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:

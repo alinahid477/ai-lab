@@ -1,9 +1,19 @@
 
 
+
 ```
+cd /workspaces/ai-lab/backend/websocket/
+python websocketserver.py 
+```
+
+
+```
+cd /workspaces/ai-lab/backend/aiapp/
 export $(grep -v '^#' .env | xargs)
 uvicorn server:app --reload
 ```
+
+
 
 
 
