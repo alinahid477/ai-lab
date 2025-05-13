@@ -1,18 +1,19 @@
 import utils
 from classes.SentenceAnalysis import SentenceAnalysis
+from classes.LogAnalysis import LogAnalysis
 import aiohttp
 import asyncio
-import re
 import json
 import os
+import pandas as pd
 
 conversation_history = [
     {"role": "system", "content": "You are a helpful assistant."}
 ]
-async def callAI(purpose, prompt, format = "json", keep_alive = "5m"):
+async def callAI(purpose, prompt, format = "json", modelname="ilab-trained-granite-7b" ,keep_alive = "5m"):
 
   # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
-  model_name = "ilab-trained-granite-7b"
+  model_name = modelname
   url = os.getenv("COMMAND_AI_ENDPOINT")
   payload = {
         "model": model_name,
@@ -41,8 +42,7 @@ async def callAI(purpose, prompt, format = "json", keep_alive = "5m"):
     authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
     headers["Authorization"] = f"Bearer {authtoken}"
 
-
-
+  print(f"calling --> {url}, {model_name}")
   async with aiohttp.ClientSession() as session:
     async with session.post(url, json=payload, headers=headers) as response:
       if response.status == 200:
@@ -81,7 +81,7 @@ async def get_intended_command(english_command):
           )
     
   try:
-    ai_response = await callAI("command", prompt, "json", "0m")
+    ai_response = await callAI("command", prompt, "json", "ilab-trained-granite-7b" , "0m")
     if "response" in ai_response:
       response_text = ai_response["response"]
       parsed_json = json.loads(response_text)
@@ -106,12 +106,73 @@ async def get_intended_command(english_command):
   return output
 
 
-if __name__ == "__main__":
-  test_prompt = "why do i need a K8s"
-  response = asyncio.run(get_intended_command(test_prompt))
-  print(response)
+# summarize logs from file /tmp/test3.notgit.csv
+async def summarize_logs(logs_csv_file_path):
+  # print(f"HERE 0 {logs_csv_file_path}")
+  prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
 
-  print("\n\n=========================================\n\n")
-  test_prompt = "can I consider openshift for this"
-  response = asyncio.run(get_intended_command(test_prompt))
-  print(response)
+  with open(prompt_template_path, "r") as file:
+    prompt_template = file.read()
+
+  # print(f"HERE 1 {logs_csv_file_path}")
+  df = pd.read_csv(logs_csv_file_path)
+  # print(f"HERE 2")
+  # Create a list to store the text lines
+  text_lines = []
+
+  # Iterate over each row in the DataFrame
+  for index, row in df.iterrows():
+      action = "threw" if row['classification'] != "info" else "output"
+      text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
+      text_lines.append(text_line)
+  # print(f"HERE 3")
+  # # Print the first 5 lines of text_lines
+  # for line in text_lines[:5]:
+  #     print(line)
+  text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
+  prompt = prompt_template.format(
+                  log_type="application",
+                  logs=text_lines_str,
+                  model_schema=LogAnalysis.model_json_schema(),
+                  stress_prompt="""You are a computer security intern that's really stressed out. 
+                  
+                  Use "um" and "ah" a lot.""",
+              )
+  # print(f"HERE 4.1")
+  # input_tokens = cmd_tokenizer(prompt, return_tensors="pt").to(device)
+  output = {}
+  try:
+    # generate output tokens
+    # output = cmd_model.generate(**input_tokens, 
+    #                       max_new_tokens=100)
+    # generator = generate.json(cmd_model, LogAnalysis)
+    # print(generator)
+    # output = list(generator(prompt))
+    ai_response = await callAI("summarize", prompt, "text")
+    if "response" in ai_response:
+      response_text = ai_response["response"]
+      output = json.loads(response_text)
+  except Exception as e:
+    print(e)
+  
+  # decode output tokens into text
+  # output = cmd_tokenizer.batch_decode(output)
+  # print output
+  # print(f"summary: {output}")
+
+  return output
+
+
+
+if __name__ == "__main__":
+  # test_prompt = "why do i need a K8s"
+  # response = asyncio.run(get_intended_command(test_prompt))
+  # print(response)
+
+  # print("\n\n=========================================\n\n")
+  # test_prompt = "can I consider openshift for this"
+  # response = asyncio.run(get_intended_command(test_prompt))
+  # print(response)
+
+  asyncio.run(summarize_logs("/tmp/test3.nogit.csv"))
+  

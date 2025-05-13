@@ -8,6 +8,7 @@ import {toast} from "sonner"
 import {fetchData} from "@/lib/utils"
 import { useAppContext } from "@/context/AppContext";
 import { set } from "react-hook-form";
+import { timeStamp } from "console";
 
 const ignoredKeys = [
   // Control keys
@@ -192,29 +193,35 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
       const newOutput = [...output, `${trimmedUserName}@${trimmedMachineName}:~$ ${cmd}`];
       
       let foundCommand = allCommands.find((command) => command.command === cmd);
-
-      const str="processcommand?command="+cmd
-      fetchData(str)
-        .then((data) => {
-          foundCommand = data.command;
-          if(foundCommand) {
-            setMyAppContext({...myAppContext, aiInterfaceResponseText:"command: " + JSON.stringify(data)});
-            
-          } else {
-            setMyAppContext({...myAppContext, aiInterfaceResponseText:data});
-          }
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-          toast.error("Failed to fetch data. Please try again.");
-        });
+      if(! foundCommand) {
+        const str="processcommand?command="+cmd
+        fetchData(str)
+          .then((data) => {
+            foundCommand = data.command;
+            if(foundCommand) {
+              setMyAppContext({...myAppContext, timeStamp:Date.now(), aiInterfaceResponseText:"command: " + JSON.stringify(data)});
+              
+            } else {
+              setMyAppContext({...myAppContext, timeStamp:Date.now(), aiInterfaceResponseText:data});
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching data:", error);
+            toast.error("Failed to fetch data. Please try again.");
+            setMyAppContext({...myAppContext, timeStamp:Date.now(), aiInterfaceResponseText:"Oops! Error fetching data from AI Machine. "+error});
+          });
+      }
+      
 
       
   
       if (foundCommand) {
         // newOutput.push(onCommandNotFound(cmd));
         // newOutput.push(<>command not found.</>);
-        if (foundCommand.command === "clear") return setOutput([]);
+        if (foundCommand.command === "clear") {
+          setMyAppContext({...myAppContext, timeStamp:Date.now(), aiInterfaceResponseText:"clear"});
+          return setOutput([]);
+        }
         // if (foundCommand.result) newOutput.push(foundCommand.result);
         if (foundCommand.sideEffect) foundCommand.sideEffect();
       }

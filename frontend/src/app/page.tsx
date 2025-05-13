@@ -80,7 +80,7 @@ export default function Home() {
           <li className="tracking-[-.01em]">
             This is a terminal like interface to send commad to the backend AI machine. The AI will pick it from there...
             <div className="grid w-full min-w-[200px] min-h-[400px]">
-              <Terminal commands={[]} username="anahid" machinename="aimachine" socketMessage={wsMessage || {}}/>  
+              <Terminal commands={[]} username="human" machinename="aimachine" socketMessage={wsMessage || {}}/>  
             </div>
             <br/><br/>
           </li>

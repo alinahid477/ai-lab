@@ -78,12 +78,12 @@ const ChatInterface: React.FC = () => {
       if (myAppContext.aiInterfaceResponseText.startsWith("command:")) {
         // Handle command logic here if needed
         sendMessage(myAppContext.aiInterfaceResponseText, "command");
-      } else {
+      } else if(myAppContext.aiInterfaceResponseText !== "clear") {
         sendMessage(myAppContext.aiInterfaceResponseText, "assistant");
       }
 		}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [myAppContext.aiInterfaceResponseText]);
+	}, [myAppContext.timeStamp]);
 
 	useEffect(() => {
 		if (myAppContext && myAppContext.aiInterfaceUserText) {
