@@ -43,6 +43,9 @@ import samplelogs from "@/lib/sample-logs.json"
 import {processAction} from "@/lib/utils"
 import { errorToJSON } from "next/dist/server/render"
 
+import jsondata from "@/lib/summarize.json" assert { type: "json" };
+
+
 const formSchema = z.object({
 		ddlLogDuration: z.string(),
 		ddlAction: z.string()
@@ -161,6 +164,9 @@ export function AIInputSheet() {
 									</FormItem>
 									)}
 							/>
+
+							<Button onClick={() => setMyAppContext({...myAppContext, summary: jsondata})}>display sample summary</Button>
+
 							<Button className="w-full">Send to AI</Button>
 							
 							

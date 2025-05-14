@@ -1,12 +1,12 @@
 "use client"
 import Image from "next/image";
-import { AIInputForm } from "@/components/custom/AIInputForm";
 import {Terminal} from "@/components/custom/Terminal";
 import { useAppContext } from "@/context/AppContext";
 import useWebSocket from 'react-use-websocket';
 import { useEffect, useState } from "react";
 import {columns} from "@/components/custom/LogsTable/columns"
 import { DataTable } from "@/components/custom/LogsTable/data-table";
+import { SummaryDisplayer } from "@/components/custom/SummaryDisplayer";
 import { AIInputSheet } from "@/components/custom/AIInputSheet";
 import ChatInterface from "@/components/custom/ChatInterface";
 
@@ -52,11 +52,7 @@ export default function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center w-full sm:items-start">
         
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li>
-             Click &nbsp; 
-            <AIInputSheet />
-            &nbsp; for form
-          </li>
+          
           
           <li className="mb-2 tracking-[-.01em]">
             This will be prompt display between human and this AI
@@ -85,14 +81,27 @@ export default function Home() {
             <br/><br/>
           </li>
           <li className="tracking-[-.01em]">
-            This is where table will show up for displaying data
+            This is where output will show up for displaying information
             {myAppContext.dataTable && myAppContext.dataTable.data && myAppContext.dataTable.data.length > 1 && (
               <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
                 {/* Render tableData content here */}
                 <DataTable columns={columns} data={myAppContext.dataTable.data} />
               </div>
             )}
+            {myAppContext.summary && (
+              <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
+                {/* Render summarize content here */}
+                <SummaryDisplayer data={myAppContext.summary}/>
+              </div>
+            )}
           </li>
+
+          <li className="pt-8">
+             Alternatively, click &nbsp; 
+            <AIInputSheet />
+            &nbsp; for form
+          </li>
+
         </ol>
         
         

@@ -25,30 +25,35 @@ export async function fetchData(apipath: string): Promise<any> {
 
 export async function processAction(action: string, paramsKeyValueObj: object): Promise<unknown> {
   let str=""
+  let theaction=""
   if (action === "rawlog" || action === "logs" || action === "kafkalogs") {
     if (paramsKeyValueObj && "duration" in paramsKeyValueObj && paramsKeyValueObj["duration"]) {
       str = `getapplogs?duration=${paramsKeyValueObj["duration"]}`;
+      theaction="getapplogs"
     }
     //const str="csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=100"
   } else if(action === "csv" || action === "csvlogs" || action === "csvlog") {
     if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
       str = `csvlogs?filepath=${paramsKeyValueObj["filepath"]}&page=0&rowcount=100`;
+      theaction="csvlogs"
     }
   } else if(action === "classify" || action === "classifycsv" || action === "classifylogs") {
     if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
       str = `classifycsv?filepath=${paramsKeyValueObj["filepath"]}`;
+      theaction="classifycsv"
     }
   } else if(action === "summarizelogs" || action === "summarize" || action === "logsummary") {
     if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
       str = `summarize?filepath=${paramsKeyValueObj["filepath"]}`;
+      theaction="summarize"
     }
   }
   
   if (str && str.length > 0) {
     try {
       const data = await fetchData(str)
-      if(data && data.rowcount) {
-        return data
+      if(data && (data.rowcount || /summarize\?/i.test(str))) {
+        return {...data, action: theaction}
       }
     } catch (error) {
       console.error("Error fetching data:", error);

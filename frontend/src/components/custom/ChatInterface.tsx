@@ -102,11 +102,20 @@ const ChatInterface: React.FC = () => {
 			console.log(duration, filepath, action)
 			processAction(action, {duration: duration, filepath:filepath})
 				.then((data) => {
-					setMyAppContext({...myAppContext, dataTable: data});
+          if(typeof data === "object" && data !== null) {
+            if ("action" in data && data.action === "summarize") {
+              setMyAppContext({...myAppContext, summary: data});
+            } else {
+              setMyAppContext({...myAppContext, dataTable: data});
+            }
+          } else {
+            throw new Error("fetched data from AI machine is null or undefined");
+          }
+          
 				})
 				.catch((error) => {
 					console.error("Error fetching data:", error);
-					toast.error("Failed to fetch data. Please try again.");
+					toast.error("Failed to fetch data from AI machine. Please try again." + error);
 				});
 			
 					
