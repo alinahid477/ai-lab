@@ -18,7 +18,7 @@ spec:
       imagePullSecrets:
       - name: quay-pull-secret
       containers:
-      - image: quay.io/rh-ee-anahid/ollama-granite:v2
+      - image: quay.io/rh-ee-anahid/ollama-granite:v3
         imagePullPolicy: Always
         name: ollama-granite
         ports:
