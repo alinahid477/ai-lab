@@ -15,7 +15,7 @@ uvicorn server:app --reload
 
 
 
-
+https://github.com/williamcaban/ollama-ubi
 
 https://github.com/rh-aiservices-bu/llm-on-openshift/blob/main/llm-servers/ollama/README.md
 

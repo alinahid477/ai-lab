@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-granite
+  namespace: ollama
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ollama-granite
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: ollama-granite
+    spec:
+      imagePullSecrets:
+      - name: quay-pull-secret
+      containers:
+      - image: quay.io/rh-ee-anahid/ollama-granite:v2
+        imagePullPolicy: Always
+        name: ollama-granite
+        ports:
+        - containerPort: 11434
+          protocol: TCP
+        resources:
+          limits:
+            nvidia.com/gpu: "1"
+          requests:
+            nvidia.com/gpu: "1"
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /.ollama
+          name: ollama-storage
+      restartPolicy: Always
+      volumes:
+      - name: ollama-storage
+        persistentVolumeClaim:
+          claimName: ollama-storage
+
+
+# oc create secret docker-registry quay-pull-secret \
+#   --docker-server=quay.io \
+#   --docker-username=rh-ee-anahid+sarobot \
+#   --docker-password='65URYS5P9209BMQHFDFJBAS04KXTBKH4DN46AMVAEEZE40MK54BHAJP64M3VD4LN' \
+#   -n ollama

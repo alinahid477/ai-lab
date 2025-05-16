@@ -31,5 +31,10 @@ ollama list
 
 sleep 2
 echo "Running model: $modelname..."
-ollama run $modelname
+ollama run $modelname &
+
+while true; do
+  echo "Looping... $(date)"
+  sleep 60
+done
 
