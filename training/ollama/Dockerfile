@@ -6,10 +6,10 @@ WORKDIR /app
 # Set environment variables to disable GPU (CPU mode)
 # ENV OLLAMA_CUDA=0
 
-# COPY Modelfile.granite .
+COPY Modelfile.granite .
 COPY Modelfile .
-# COPY granite-3.3-2b-instruct-Q4_K_M.gguf .
-COPY pytorch_model-Q4_K_M.gguf .
+COPY granite-3.3-2b-instruct-Q4_K_M.gguf .
+COPY ilab-trained-granite-7b-Q4_K_M.gguf .
 COPY ollama-start.sh .
 RUN chmod +x ollama-start.sh
 # Mount a local directory containing your model
@@ -29,8 +29,13 @@ RUN echo "Starting Ollama server in background..." \
     && sleep 3 \
     && ollama create ilab-trained-granite-7b -f Modelfile \
     && sleep 2 \
+    && echo "Creating model from Modelfile.granite..." \
+    && sleep 3 \
+    && ollama create granite-3.3-2b -f Modelfile.granite \
+    && sleep 2 \
     && echo "Listing models under ollama..." \
     && ollama list
+    
 
 
 # Stage 2: Create the final image

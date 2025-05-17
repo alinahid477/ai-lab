@@ -65,3 +65,4 @@ instructlab/*
 
 training_results
 training/ollama/pytorch_model-Q4_K_M.gguf
+training/ollama/ilab-trained-granite-7b-Q4_K_M.gguf
