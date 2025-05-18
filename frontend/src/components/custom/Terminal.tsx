@@ -9,6 +9,7 @@ import {fetchData} from "@/lib/utils"
 import { useAppContext } from "@/context/AppContext";
 import { set } from "react-hook-form";
 import { timeStamp } from "console";
+import MacBusySpinner from "./MacBusySpinner/MacBusySpinner";
 
 const ignoredKeys = [
   // Control keys
@@ -170,6 +171,9 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
     };
   
     const handleCommand = (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if(myAppContext.haultTerminal) {
+        return;
+      }
       if (event.key == "Backspace")
         return setCurrentLine(currentLine.substring(0, currentLine?.length));
       if (event.key === "Enter") {
@@ -180,6 +184,9 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
     };
   
     const handleInput = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if(myAppContext.haultTerminal) {
+        return;
+      }
       event.preventDefault();
       if (!ignoredKeys.includes(event.currentTarget.value)) {
         setCaretPosition();
@@ -319,28 +326,36 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
             :<span className="dark:text-yellow-500/80 text-orange-800 font-bold">~</span>
             <span className="dark:text-red-500/80 text-red-800 font-bold">$</span>&nbsp;
             <div className="flex-grow relative">
-              <span id="hiddenSpan" className="invisible fixed" ref={hiddenSpanRef} />
-              <input
-                ref={inputRef}
-                className="fixed -z-10 w-0 h-0 opacity-0"
-                value={currentLine}
-                onKeyDown={handleCommand}
-                onInput={handleInput}
-                autoComplete="off"
-                autoCapitalize="none"
-                autoCorrect="off"
-                dir="ltr"
-                type="text"
-              />
-              <div className="flex">
-                <span>{currentLine}</span>
-                {focused ? (
-                  <div
-                    ref={caretRef}
-                    className="absolute top-0 h-full bg-slate-800 dark:bg-white w-[10px] animate-caret-blink"
+              {myAppContext.haultTerminal ? 
+              <>
+                <MacBusySpinner/>
+              </> 
+              : <>
+                  <span id="hiddenSpan" className="invisible fixed" ref={hiddenSpanRef} />
+                  <input
+                    ref={inputRef}
+                    className="fixed -z-10 w-0 h-0 opacity-0"
+                    value={currentLine}
+                    onKeyDown={handleCommand}
+                    onInput={handleInput}
+                    autoComplete="off"
+                    autoCapitalize="none"
+                    autoCorrect="off"
+                    dir="ltr"
+                    type="text"
                   />
-                ) : null}
-              </div>
+                  <div className="flex">
+                    <span>{currentLine}</span>
+                    {focused ? (
+                      <div
+                        ref={caretRef}
+                        className="absolute top-0 h-full bg-slate-800 dark:bg-white w-[10px] animate-caret-blink"
+                      />
+                    ) : null}
+                  </div>
+                </>
+              }
+              
             </div>
           </div>
         </div>

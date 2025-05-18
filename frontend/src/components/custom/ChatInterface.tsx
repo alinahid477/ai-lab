@@ -57,7 +57,9 @@ const ChatInterface: React.FC = () => {
       };
 			setMessages((prev) => [...prev, assistantReply]);
 			setIsThinking(false);
-		}
+		} else {
+      setIsThinking(false);
+    }
 
 
     // setTimeout(() => {
@@ -71,6 +73,7 @@ const ChatInterface: React.FC = () => {
 				setIsThinking(false);
     	}, 300000);
 		}
+    setMyAppContext({...myAppContext, "haultTerminal": isThinking});
 	}, [isThinking]);
 
 	useEffect(() => {
@@ -95,21 +98,25 @@ const ChatInterface: React.FC = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const doExecute = (data: any) => {
     try {
-      console.log(data)
+      console.log("doExecute", data)
 			const duration = parseInt(data.time_duration);
       const filepath = data.filepath;
 			const action = data.command;
-			console.log(duration, filepath, action)
 			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, action, {duration: duration, filepath:filepath})
 				.then((data) => {
           if(typeof data === "object" && data !== null) {
-            if ("action" in data && data.action === "summarize") {
-              setMyAppContext({...myAppContext, summary: data});
+            if ("action" in data) {
+              if(data.action === "summarize") {
+                setMyAppContext({...myAppContext, summary: data});
+              } else {
+                setMyAppContext({...myAppContext, dataTable: data});
+              }
+              
             } else {
-              setMyAppContext({...myAppContext, dataTable: data});
+              throw new Error(JSON.stringify(data));
             }
           } else {
-            throw new Error("fetched data from AI machine is null or undefined");
+            throw new Error("fetched data from AI machine is null or undefined. ERROR: "+data);
           }
           
 				})
@@ -120,13 +127,13 @@ const ChatInterface: React.FC = () => {
 			
 					
 			toast(
-				<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+				<pre className="mt-2 w-[340px] max-h-[200px] rounded-md p-4 overflow-y-auto whitespace-pre-wrap break-words">
 					<code className="text-black">{JSON.stringify(data)}</code>
 				</pre>
 			);
 		} catch (error) {
-			console.error("Form submission error", error);
-			toast.error("Failed to submit the form. Please try again.");
+			console.error("Execution error", error);
+			toast.error("Failed execute command. Please try again.");
 		}
   };
 

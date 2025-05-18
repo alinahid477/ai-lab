@@ -12,7 +12,18 @@ export async function fetchData(AIBACKEND_SERVER: string, apipath: string): Prom
   try {
     const response = await fetch(url);
     if (!response.ok) {
-      throw new Error("Network response was not ok");
+      const contentType = response.headers.get('content-type');
+      let errorBody;
+
+      if (contentType && contentType.includes('application/json')) {
+        const json = await response.json();
+        errorBody = JSON.stringify(json);
+      } else {
+        errorBody = await response.text();
+      }
+
+      // Include body in error
+      throw new Error(`HTTP ${response.status}: ${response.statusText} --> ${errorBody}`);
     }
     const data = await response.json();
     return data;
@@ -54,6 +65,8 @@ export async function processAction(AIBACKEND_SERVER:string, action: string, par
       const data = await fetchData(AIBACKEND_SERVER, str)
       if(data && (data.rowcount || /summarize\?/i.test(str))) {
         return {...data, action: theaction}
+      } else {
+        return data;
       }
     } catch (error) {
       console.error("Error fetching data:", error);

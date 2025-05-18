@@ -27,3 +27,7 @@ docker build -t frontend-aiapp .
 cd ../../
 docker run --rm -it --name frontend-aiapp --env-file $(pwd)/.env -p 3000:3000  frontend-aiapp
 ```
+
+```
+docker compose up
+```

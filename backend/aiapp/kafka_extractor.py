@@ -19,7 +19,7 @@ async def get_logs(topic, duration):
         raise Exception("Empty topic supplied. Must provide valid topic.")    
 
     kafkaBrokers = os.getenv("KAFKA_BROKER_ENDPOINT")
-    useSSL = os.getenv("KAFKA_USE_SSL", "true").lower() in ("false", "0", "no")
+    useSSL = os.getenv("KAFKA_USE_SSL", "false").lower() in ("true", "1", "yes")
     caRootLocation='/aiapp/certs/kafkabroker/ssl/CARoot.pem'
     certLocation='/aiapp/certs/kafkabroker/ssl/certificate.pem'
     keyLocation='/aiapp/certs/kafkabroker/ssl/key.pem'
