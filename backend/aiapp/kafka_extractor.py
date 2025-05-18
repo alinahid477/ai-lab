@@ -7,40 +7,50 @@ import utils
 import asyncio
 
 async def send_message_to_ws(message):
+    print(message)
     utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
 
 async def get_logs(topic, duration):
-    if duration not in [1, 2, 4, 6, 12, 24, 48, 72]:
-        asyncio.run(send_message_to_ws(f"STATUS: ERROR [500] Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours."))
+    if duration not in [1, 2, 4, 6, 12, 24, 48, 72, 168]:
+        await send_message_to_ws(f"STATUS: ERROR [500] Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours.")
         raise Exception(f"Requested duration: {duration}. Duration must be one of the following values: 1, 2, 4, 6, 12, 24, 48, 72 hours.")
     if topic is None: 
-        asyncio.run(send_message_to_ws(f"STATUS: ERROR [500] Empty topic supplied. Must provide valid topic."))
+        await  send_message_to_ws(f"STATUS: ERROR [500] Empty topic supplied. Must provide valid topic.")
         raise Exception("Empty topic supplied. Must provide valid topic.")    
 
     kafkaBrokers = os.getenv("KAFKA_BROKER_ENDPOINT")
+    useSSL = os.getenv("KAFKA_USE_SSL", "true").lower() in ("false", "0", "no")
     caRootLocation='/aiapp/certs/kafkabroker/ssl/CARoot.pem'
     certLocation='/aiapp/certs/kafkabroker/ssl/certificate.pem'
     keyLocation='/aiapp/certs/kafkabroker/ssl/key.pem'
     password=os.getenv("KAFKA_BROKER_SSL_PASSWORD")
 
     await send_message_to_ws(f"getting logs for the past: {duration}hrs for topic: {topic}")
-    await send_message_to_ws(f"kafka broker: {kafkaBrokers}")
+    await send_message_to_ws(f"kafka broker: {kafkaBrokers}, ssl: {useSSL}, pass: {password}")
 
     
-
-    consumer = KafkaConsumer(topic,
-        bootstrap_servers=[kafkaBrokers],
-        value_deserializer=lambda x: x.decode('utf-8'),
-        security_protocol='SSL',
-        ssl_check_hostname=False,
-        ssl_cafile=caRootLocation,
-        ssl_certfile=certLocation,
-        # ssl_keyfile=keyLocation,
-        ssl_password=password,
-        auto_offset_reset='earliest',
-        enable_auto_commit=False,
-        consumer_timeout_ms=180000 # 3 minutes
-    )
+    if useSSL:
+        consumer = KafkaConsumer(topic,
+            bootstrap_servers=[kafkaBrokers],
+            value_deserializer=lambda x: x.decode('utf-8'),
+            security_protocol='SSL',
+            ssl_check_hostname=False,
+            ssl_cafile=caRootLocation,
+            ssl_certfile=certLocation,
+            # ssl_keyfile=keyLocation,
+            ssl_password=password,
+            auto_offset_reset='earliest',
+            enable_auto_commit=False,
+            consumer_timeout_ms=180000 # 3 minutes
+        )
+    else:
+        consumer = KafkaConsumer(topic,
+            bootstrap_servers=[kafkaBrokers],
+            value_deserializer=lambda x: x.decode('utf-8'),
+            auto_offset_reset='earliest',
+            enable_auto_commit=False,
+            consumer_timeout_ms=180000 # 3 minutes
+        )
 
 
     timestamp_duration_hrs_ago = int((datetime.now() - timedelta(hours=duration)).timestamp() * 1000)

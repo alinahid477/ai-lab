@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-
+import os
 # Set of connected clients
 connected_clients = set()
 
@@ -30,8 +30,11 @@ async def handle_client(websocket):
 
 # Main function to start the WebSocket server
 async def main():
-    server = await websockets.serve(handle_client, 'localhost', 8765)
-    print("server started on port localhost:8765")
+    print(f"starting webserver socket....")
+    host = os.getenv("WEBSOCKET_HOST", "localhost")
+    port = int(os.getenv("WEBSOCKET_PORT", "8765"))
+    server = await websockets.serve(handle_client, host, port)
+    print(f"server started on port {host}:{port}")
     await server.wait_closed()
 
 # Run the server

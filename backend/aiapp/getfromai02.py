@@ -10,9 +10,16 @@ import pandas as pd
 conversation_history = [
     {"role": "system", "content": "You are a helpful assistant."}
 ]
-async def callAI(purpose, prompt, format = "json", modelname="ilab-trained-granite-7b" ,keep_alive = "5m"):
+
+command_ai_model_name = os.getenv("COMMAND_AI_MODEL_NAME")
+chat_ai_model_name = os.getenv("CHAT_AI_MODEL_NAME")
+
+async def callAI(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
 
   # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
+  if modelname == "noparampassed":
+    modelname=command_ai_model_name
+
   model_name = modelname
   url = os.getenv("COMMAND_AI_ENDPOINT")
   payload = {
@@ -27,7 +34,7 @@ async def callAI(purpose, prompt, format = "json", modelname="ilab-trained-grani
     "Content-Type": "application/json"
   }
   if purpose != "command":
-    model_name = "granite-3-1-8b-instruct-w4a16"
+    model_name = chat_ai_model_name
     url = os.getenv("CHAT_AI_ENDPOINT")
     conversation_history.append({"role": "user", "content": prompt})
     if len(conversation_history) > 10:
@@ -81,7 +88,7 @@ async def get_intended_command(english_command):
           )
     
   try:
-    ai_response = await callAI("command", prompt, "json", "ilab-trained-granite-7b" , "0m")
+    ai_response = await callAI("command", prompt, "json", command_ai_model_name , "0m")
     if "response" in ai_response:
       response_text = ai_response["response"]
       parsed_json = json.loads(response_text)

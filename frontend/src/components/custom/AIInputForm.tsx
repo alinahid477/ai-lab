@@ -59,7 +59,7 @@ export function AIInputForm() {
       if (action === "rawlog") {
         // const str="getapplogs?duration="+logDuration
         const str="csvlogs?filepath=/tmp/myappocp_202503182148.csv&page=0&rowcount=100"
-        fetchData(str)
+        fetchData(myAppContext.ENVVARS.AIBACKEND_SERVER, str)
           .then((data) => {
             setMyAppContext({...myAppContext, dataTable:data});
           })

@@ -147,7 +147,7 @@ export function DataTable<TData extends LogData, TValue>({
   function dataTableShowPage(pageNo: string) {
     if (pageNo !== undefined && pageNo !== null) {
       const str = "csvlogs?filepath="+myAppContext.dataTable.filepath+"&page="+ pageNo +"&rowcount=" + myAppContext.dataTable.rowcount
-      fetchData(str)
+      fetchData(myAppContext.ENVVARS.AIBACKEND_SERVER, str)
           .then((data) => {
             setMyAppContext({...myAppContext, dataTable: data});
             setPaginationCurrentPage(parseInt(pageNo, 0));
@@ -170,7 +170,7 @@ export function DataTable<TData extends LogData, TValue>({
   function previousPage() {
     if(myAppContext.dataTable.page > 1) {
       const str = "csvlogs?filepath="+myAppContext.dataTable.filepath+"&page="+ (myAppContext.dataTable.page -1) +"&rowcount=" + myAppContext.dataTable.rowcount
-      fetchData(str)
+      fetchData(myAppContext.ENVVARS.AIBACKEND_SERVER, str)
           .then((data) => {
             setMyAppContext({...myAppContext, dataTable: data});
           })
@@ -193,7 +193,7 @@ export function DataTable<TData extends LogData, TValue>({
   function nextPage() {
     if(myAppContext.dataTable.totalrow > myAppContext.dataTable.page * myAppContext.dataTable.rowcount) {
       const str = "csvlogs?filepath="+myAppContext.dataTable.filepath+"&page="+ (myAppContext.dataTable.page +1) +"&rowcount=" + myAppContext.dataTable.rowcount
-      fetchData(str)
+      fetchData(myAppContext.ENVVARS.AIBACKEND_SERVER, str)
           .then((data) => {
             setMyAppContext({...myAppContext,dataTable: data});
           })

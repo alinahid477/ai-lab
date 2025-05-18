@@ -195,7 +195,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
       let foundCommand = allCommands.find((command) => command.command === cmd);
       if(! foundCommand) {
         const str="processcommand?command="+cmd
-        fetchData(str)
+        fetchData(myAppContext.ENVVARS.AIBACKEND_SERVER, str)
           .then((data) => {
             foundCommand = data.command;
             if(foundCommand) {

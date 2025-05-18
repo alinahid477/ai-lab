@@ -6,8 +6,8 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function fetchData(apipath: string): Promise<any> {
-  const host = "http://localhost:8000";
+export async function fetchData(AIBACKEND_SERVER: string, apipath: string): Promise<any> {
+  const host = AIBACKEND_SERVER || "http://localhost:8000";
   const url = host + "/" + apipath;
   try {
     const response = await fetch(url);
@@ -23,7 +23,7 @@ export async function fetchData(apipath: string): Promise<any> {
 }
 
 
-export async function processAction(action: string, paramsKeyValueObj: object): Promise<unknown> {
+export async function processAction(AIBACKEND_SERVER:string, action: string, paramsKeyValueObj: object): Promise<unknown> {
   let str=""
   let theaction=""
   if (action === "rawlog" || action === "logs" || action === "kafkalogs") {
@@ -51,7 +51,7 @@ export async function processAction(action: string, paramsKeyValueObj: object): 
   
   if (str && str.length > 0) {
     try {
-      const data = await fetchData(str)
+      const data = await fetchData(AIBACKEND_SERVER, str)
       if(data && (data.rowcount || /summarize\?/i.test(str))) {
         return {...data, action: theaction}
       }

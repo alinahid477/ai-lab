@@ -10,21 +10,46 @@ import { SummaryDisplayer } from "@/components/custom/SummaryDisplayer";
 import { AIInputSheet } from "@/components/custom/AIInputSheet";
 import ChatInterface from "@/components/custom/ChatInterface";
 
-
 export default function Home() {
 
-  const socketUrl = "ws://localhost:8765";
-  const { lastMessage } = useWebSocket(socketUrl);
-  const [isToggleToForm, setIsToggleToForm] = useState(false);
+  const [socketUrl, setSocketUrl] = useState(() => 
+    typeof window !== 'undefined' 
+      ? `ws://${window.location.hostname}:8765` 
+      : 'ws://localhost:8765'
+  );
+
+  const { myAppContext, setMyAppContext} = useAppContext();
+
+  const [showPage, setShowPage] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/env')
+      .then((res) => res.json())
+      .then((data) => {
+        console.log('Fetched ENVVARS:', data);
+        setShowPage(true)
+        setSocketUrl(data.WSSERVER);
+        setMyAppContext({...myAppContext, ENVVARS: {"WSSERVER":data.WSSERVER, "AIBACKEND_SERVER": data.AIBACKEND_SERVER}});
+      })
+      .catch((err) => {
+        console.error('Error fetching runtimeValue:', err);
+        //setVal(null);
+      });
+  }, []);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [wsMessage, setWSMessage] = useState<{ data: any; timeStamp: number } | null>(null);
   
-  const { myAppContext } = useAppContext();
+  
 
-
+  const { lastMessage } = useWebSocket(socketUrl, {
+                                        shouldReconnect: () => true,
+                                        reconnectAttempts: 5,
+                                        reconnectInterval: 10000,
+                                      });
+  
   useEffect(() => {
     if (lastMessage && typeof lastMessage === 'object' && 'data' in lastMessage && 'timeStamp' in lastMessage) {
-      
       let parsedData;
       try {
         parsedData = JSON.parse(lastMessage.data);
@@ -38,11 +63,14 @@ export default function Home() {
       } catch (error) {
         console.log(error)
         console.log("Failed to parse data as JSON, treating as text:", lastMessage.data);
-      }
-      
-      
+      }    
     }
   }, [lastMessage]);
+  
+  
+  
+
+
 
 
   
@@ -51,7 +79,8 @@ export default function Home() {
     <div className="grid grid-rows-[5px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:pl-20 sm:pr-20 font-[family-name:var(--font-geist-sans)]">
       <main className="flex flex-col gap-[32px] row-start-2 items-center w-full sm:items-start">
         
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
+        {showPage ? 
+          <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           
           
           <li className="mb-2 tracking-[-.01em]">
@@ -103,6 +132,10 @@ export default function Home() {
           </li>
 
         </ol>
+        : <div>Loading...</div>
+        }
+
+        
         
         
       </main>

@@ -66,7 +66,7 @@ export function AIInputSheet() {
 			const action = values.ddlAction; 
 			setIsSheetOpen(false);
 			
-			processAction(action, {duration: logDuration})
+			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, action, {duration: logDuration})
 				.then((data) => {
 					setMyAppContext({...myAppContext, dataTable: data});
 				})

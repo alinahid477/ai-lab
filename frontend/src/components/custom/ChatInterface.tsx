@@ -100,7 +100,7 @@ const ChatInterface: React.FC = () => {
       const filepath = data.filepath;
 			const action = data.command;
 			console.log(duration, filepath, action)
-			processAction(action, {duration: duration, filepath:filepath})
+			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, action, {duration: duration, filepath:filepath})
 				.then((data) => {
           if(typeof data === "object" && data !== null) {
             if ("action" in data && data.action === "summarize") {

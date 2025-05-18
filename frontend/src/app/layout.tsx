@@ -2,7 +2,8 @@
 // import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/styles/globals.css"
-import { AppWrapper, useAppContext } from "@/context/AppContext";
+import { AppWrapper } from "@/context/AppContext";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,7 @@ export default function RootLayout({
         <AppWrapper>
           {children}
         </AppWrapper>
-        
+        <Toaster/>
       </body>
     </html>
   );
