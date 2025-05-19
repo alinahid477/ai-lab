@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-wsserver
+  namespace: intellilogs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-wsserver
+  template:
+    metadata:
+      labels:
+        app: backend-wsserver
+    spec:
+      imagePullSecrets:
+        - name: myquaycred
+      containers:
+        - name: backend-wsserver
+          image: quay.io/rh-ee-anahid/backend-wsserver:v4
+          ports:
+            - containerPort: 8765
+          envFrom:
+            - configMapRef:
+                name: intellilog-envvars
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-wsserver
+  namespace: intellilogs
+spec:
+  selector:
+    app: backend-wsserver
+  ports:
+    - port: 8765
+      targetPort: 8765
+  type: ClusterIP

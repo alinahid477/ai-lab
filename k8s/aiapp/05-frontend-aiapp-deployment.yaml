@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-aiapp
+  namespace: intellilogs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-aiapp
+  template:
+    metadata:
+      labels:
+        app: frontend-aiapp
+    spec:
+      imagePullSecrets:
+        - name: myquaycred
+      containers:
+        - name: frontend-aiapp
+          image: quay.io/rh-ee-anahid/frontend-aiapp:v1
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: intellilog-envvars
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-aiapp
+  namespace: intellilogs
+spec:
+  selector:
+    app: frontend-aiapp
+  ports:
+    - port: 3000
+      targetPort: 3000
+  type: ClusterIP

@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simpleapp-deployment
+  namespace: myapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: simpleapp
+  template:
+    metadata:
+      labels:
+        app: simpleapp
+    spec:
+      containers:
+      - name: simpleapp
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          while true; do
+            if [ $((RANDOM % 2)) -eq 0 ]; then
+              echo "I am simpleapp. I have just faced an issue..." >&2
+            else
+              echo "I am simpleapp. Running normally.."
+            fi
+            sleep 30
+          done

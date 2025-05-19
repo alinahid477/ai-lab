@@ -1,0 +1,15 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: frontend-aiapp-route
+  namespace: intellilogs
+spec:
+  host: frontend-aiapp.apps.cluster-cvh69.cvh69.sandbox305.opentlc.com
+  path: /
+  to:
+    kind: Service
+    name: frontend-aiapp
+    weight: 100
+  port:
+    targetPort: 3000
+    

@@ -27,4 +27,4 @@ COPY . .
 EXPOSE 8765
 
 # Command to run the application
-ENTRYPOINT ["python", "websocketserver.py"]
+ENTRYPOINT ["python", "-u", "websocketserver.py"]

@@ -1,0 +1,14 @@
+kind: Console
+apiVersion: console.streamshub.github.com/v1alpha1
+metadata:
+  name: logging-kafka-console
+  namespace: kafka
+spec:
+  hostname: logging-kafka-console.apps.cluster-7msqx.dynamic.redhatworkshops.io
+  kafkaClusters:
+    - name: logging-kafka
+      namespace: kafka
+      listener: kafkaroute
+      # credentials:
+      #   kafkaUser:
+      #     name: <strimzi-kafka-user-name-for-connection>

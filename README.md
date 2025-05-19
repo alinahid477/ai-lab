@@ -19,6 +19,7 @@ cd backend/websocker/
 docker build -t backend-wsserver .
 cd ../../
 docker run --rm -it  --name backend-wsserver -p 8765:8765   backend-wsserver
+docker tag backend-wsserver:latest quay.io/rh-ee-anahid/backend-wsserver:v2
 ```
 
 ```

@@ -1,0 +1,66 @@
+apiVersion: observability.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  annotations:
+    observability.openshift.io/log-level: info
+  name: logging
+  namespace: openshift-logging
+spec:
+  managementState: Managed
+  outputs:
+    # # - name: app-logs-kafka
+    # #   type: kafka
+    # #   kafka:
+    # #     brokers:
+    # #       - 'logging-kafka-kafka-bootstrap.kafka.svc.cluster.local:9092'
+    # #     topic: ocplogs-application
+    # - name: app-logs-kafka
+    #   type: kafka
+    #   kafka:
+    #     url: 'plain://logging-kafka-kafka-bootstrap.kafka.svc:9092'
+    #     topic: ocplogs-application
+    - name: myapp-logs-kafka
+      type: kafka
+      kafka:
+        url: 'plain://logging-kafka-kafka-bootstrap.kafka.svc:9092'
+        topic: ocplogs-myapp
+    # - name: audit-logs-kafka
+    #   type: kafka
+    #   kafka:
+    #     url: 'plain://logging-kafka-kafka-bootstrap.kafka.svc:9092'
+    #     topic: ocplogs-audit
+    # - name: infra-logs-kafka
+    #   type: kafka
+    #   kafka:
+    #     url: 'plain://logging-kafka-kafka-bootstrap.kafka.svc:9092'
+    #     topic: ocplogs-infrastructure
+  inputs:
+  - name: myapp-logs
+    type: application
+    application:
+      includes:
+        - namespace: "myapp"
+  pipelines:
+    # - inputRefs:
+    #     - application
+    #     # - infrastructure
+    #   name: app-logs-to-kafka
+    #   outputRefs:
+    #     - app-logs-kafka
+    - inputRefs:
+        - myapp-logs
+      name: myapp-logs-to-kafka
+      outputRefs:
+        - myapp-logs-kafka
+    # - inputRefs:
+    #     - audit
+    #   name: audit-logs-to-kafka
+    #   outputRefs:
+    #     - audit-logs-kafka
+    # - inputRefs:
+    #     - infrastructure
+    #   name: infra-logs-to-kafka
+    #   outputRefs:
+    #     - infra-logs-kafka
+  serviceAccount:
+    name: log-collector

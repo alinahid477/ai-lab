@@ -1,0 +1,87 @@
+#---
+# apiVersion: rbac.authorization.k8s.io/v1
+# kind: ClusterRole
+# metadata:
+#   name: cluster-logging-default-collector
+# rules:                                              
+#   - apiGroups:      
+#       - logging.openshift.io                                
+#       - loki.grafana.com
+#       - observability.openshift.io                            
+#     resources:                                      
+#       - application
+#       - audit
+#       - infrastructure 
+#       - clusterlogforwarders                  
+#     resourceNames:                                  
+#       - logs                                        
+#     verbs:                                          
+#       - create
+#       - collect
+#       - delete                                      
+#       - get                                         
+#       - list                                        
+#       - patch                                       
+#       - update                                      
+#       - watch
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: log-collector
+  namespace: openshift-logging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logging-manager-collector-logs-writer-rolebinding
+roleRef:                                           
+  apiGroup: rbac.authorization.k8s.io              
+  kind: ClusterRole                                
+  name: logging-collector-logs-writer
+subjects:                                          
+  - kind: ServiceAccount                           
+    name: log-collector
+    namespace: openshift-logging
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logging-manager-audit-logs-rolebinding
+roleRef:                                           
+  apiGroup: rbac.authorization.k8s.io              
+  kind: ClusterRole                                
+  name: collect-audit-logs
+subjects:                                          
+  - kind: ServiceAccount                           
+    name: log-collector
+    namespace: openshift-logging
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logging-manager-infrastructure-logs-rolebinding
+roleRef:                                           
+  apiGroup: rbac.authorization.k8s.io              
+  kind: ClusterRole                                
+  name: collect-infrastructure-logs
+subjects:                                          
+  - kind: ServiceAccount                           
+    name: log-collector
+    namespace: openshift-logging
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: logging-manager-application-logs-rolebinding
+roleRef:                                           
+  apiGroup: rbac.authorization.k8s.io              
+  kind: ClusterRole                                
+  name: collect-application-logs
+subjects:                                          
+  - kind: ServiceAccount                           
+    name: log-collector
+    namespace: openshift-logging

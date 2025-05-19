@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-aiapp
+  namespace: intellilogs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-aiapp
+  template:
+    metadata:
+      labels:
+        app: backend-aiapp
+    spec:
+      imagePullSecrets:
+        - name: myquaycred
+      initContainers:
+        - name: init-download-model
+          image: curlimages/curl:latest
+          command: [ "sh", "-c" ]
+          args:
+            - >
+              mkdir -p /mnt/models/logclassifier/1 &&
+              curl -L https://huggingface.co/alinahid477/ilab-trained-granite-7b-lab/resolve/main/log_classifier.onnx
+              -o /mnt/models/logclassifier/1/model.onnx
+          volumeMounts:
+            - name: model-volume
+              mountPath: /mnt/models/logclassifier/1
+      containers:
+        - name: backend-aiapp
+          image: quay.io/rh-ee-anahid/backend-aiapp:v1
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: intellilog-envvars
+          volumeMounts:
+            - name: model-volume
+              mountPath: /mnt/models/logclassifier/1
+      volumes:
+        - name: model-volume
+          emptyDir: {}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-aiapp
+  namespace: intellilogs
+spec:
+  selector:
+    app: backend-aiapp
+  ports:
+    - port: 8000
+      targetPort: 8000
+  type: ClusterIP

@@ -31,10 +31,14 @@ async def handle_client(websocket):
 # Main function to start the WebSocket server
 async def main():
     print(f"starting webserver socket....")
-    host = os.getenv("WEBSOCKET_HOST", "localhost")
+    host = os.getenv("WEBSOCKET_HOST")
     port = int(os.getenv("WEBSOCKET_PORT", "8765"))
-    server = await websockets.serve(handle_client, host, port)
-    print(f"server started on port {host}:{port}")
+    if host:
+        server = await websockets.serve(handle_client, host=host, port=port)
+        print(f"server started on {host}:{port}")
+    else:
+        server = await websockets.serve(handle_client, port=port)
+        print(f"server started on post: {port}")
     await server.wait_closed()
 
 # Run the server

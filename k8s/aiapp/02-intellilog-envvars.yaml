@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: intellilog-envvars
+  namespace: intellilogs
+data:
+  # backend-wsserver
+  WEBSOCKET_PORT: '8765'
+  # frontend-aiapp
+  AIBACKEND_SERVER: http://backend-aiapp.intellilogs.svc.cluster.local:8000
+  WSSERVER: ws://backend-wsserver.intellilogs.svc.cluster.local:8765
+  # backend-aiapp
+  KAFKA_BROKER_ENDPOINT: logging-kafka-kafka-kafkaroute-bootstrap.kafka.svc.cluster.local:9094
+  KAFKA_BROKER_SSL_PASSWORD: none
+  KAFKA_USE_SSL: "false"
+  WS_ENDPOINT: ws://backend-wsserver.intellilogs.svc.cluster.local:8765
+  COMMAND_AI_ENDPOINT: http://ollama-granite-svc.ollama.svc.cluster.local:11434/api/generate
+  COMMAND_AI_MODEL_NAME: ilab-trained-granite-7b
+  CHAT_AI_ENDPOINT: http://ollama-granite-svc.ollama.svc.cluster.local:11434/v1/chat/completions
+  CHAT_AI_AUTH_TOKEN: notneededhere
+  CHAT_AI_MODEL_NAME: granite-3.3-2b

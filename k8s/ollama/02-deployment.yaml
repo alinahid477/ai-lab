@@ -1,3 +1,19 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-storage
+  namespace: ollama
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 50Gi
+  storageClassName: gp3-csi
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -16,9 +32,9 @@ spec:
         app: ollama-granite
     spec:
       imagePullSecrets:
-      - name: quay-pull-secret
+      - name: myquaycred
       containers:
-      - image: quay.io/rh-ee-anahid/ollama-granite:v3
+      - image: quay.io/rh-ee-anahid/ollama-granite:v5
         imagePullPolicy: Always
         name: ollama-granite
         ports:
@@ -46,3 +62,19 @@ spec:
 #   --docker-username=rh-ee-anahid+sarobot \
 #   --docker-password='65URYS5P9209BMQHFDFJBAS04KXTBKH4DN46AMVAEEZE40MK54BHAJP64M3VD4LN' \
 #   -n ollama
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-granite-svc
+  namespace: ollama
+spec:
+  ports:
+  - port: 11434
+    protocol: TCP
+    targetPort: 11434
+  selector:
+    app: ollama-granite
+  type: ClusterIP
+
