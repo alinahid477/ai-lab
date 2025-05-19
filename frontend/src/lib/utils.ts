@@ -63,17 +63,31 @@ export async function processAction(AIBACKEND_SERVER:string, action: string, par
       str = `listfiles`;
       theaction="listfiles"
     }
+  } else if (action === "truncatecsv") {
+    if (paramsKeyValueObj && "filepath" in paramsKeyValueObj && "totalrows" in paramsKeyValueObj) {
+      str = `truncatecsv?filepath=${paramsKeyValueObj["filepath"]}&totalrows=${paramsKeyValueObj["totalrows"]}`;
+      theaction="truncatecsv"
+    }
+  } else if (action === "downloadcsv" || action === "downloadfile") {
+    if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
+      str = `downloadfile?filepath=${paramsKeyValueObj["filepath"]}`;
+      theaction="downloadfile"
+    }
   }
   
   if (str && str.length > 0) {
     try {
+      console.log("********************")
       const data = await fetchData(AIBACKEND_SERVER, str)
+      
+      console.log("HEEEEEHE")
       if(data && (data.rowcount || /summarize\?/i.test(str))) {
         return {...data, action: theaction}
       } else {
         return data;
       }
     } catch (error) {
+      console.error(error)
       console.error("Error fetching data:", error);
       throw error;
     }

@@ -73,7 +73,7 @@ async def download_file(filepath: str):
         if not os.path.exists(filepath):
             utils.send_to_websocket_sync({"type": "terminalinfo", "data": f"Requested file {filepath} not found"})    
             raise HTTPException(status_code=404, detail="File not found")
-
+        print(f"DOWNALOAD FILE: {filepath}")
         return FileResponse(filepath, media_type='text/csv')
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -100,3 +100,14 @@ async def list_files():
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         print("Processed listing files in /tmp/logs dir")
+
+@app.get("/truncatecsv")
+async def truncate_csv(filepath, totalrows):
+    try:
+        send_message_to_ws(f"Processing truncating csv {filepath} to {totalrows} rows")
+        print(f"Processing truncating csv {filepath} to {totalrows} rows...")
+        return utils.truncate_csv(filepath, totalrows)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        send_message_to_ws(f"Processed truncating csv {filepath} to {totalrows} rows")

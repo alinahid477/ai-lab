@@ -2,8 +2,6 @@ import onnxruntime as ort
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import pandas as pd
-import os
-from datetime import datetime, timedelta
 import utils
 
 
@@ -50,22 +48,11 @@ def classify(test_df):
             print(f"{index + 1} out of {total_rows} rows processed...")
     return test_df
 
-def dataframe_to_csv(df, filesuffix):
-    dir=os.path.dirname(filesuffix)
-    if dir is None or dir == "": 
-        dir="/tmp/logs"
-        filename = f"classified_{filesuffix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
-    else: # this means I have provided the original unclassified csv file fullpath 
-        filename = f"classified_{os.path.basename(filesuffix)}"
-    
-    classified_file = os.path.join(dir, filename)
-    df.to_csv(classified_file, index=False)
-    
-    return {"filename": classified_file}
+
 
 def classify_and_display_from_csv(csvfile, page, rowcount):
     df = classify_using_csv(csvfile)
-    csv = dataframe_to_csv(df, csvfile)
+    csv = utils.dataframe_to_csv(df, csvfile)
     return utils.display_logs(csv['filename'], page, rowcount)
     
 def classify_and_display_from_data(df, page, rowcount):

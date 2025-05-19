@@ -38,7 +38,8 @@ import {
 		SelectValue
 } from "@/components/ui/select"
 	
-
+import { Input } from "@/components/ui/input"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 // import samplelogs from "@/lib/sample-logs.json"
 
 import {processAction} from "@/lib/utils"
@@ -52,13 +53,25 @@ const formSchema = z.object({
 		ddlAction: z.string()
 });
 
+const formFreeHandSchema = z.object({
+	filepath: z.string(),
+	totalrows: z.string()
+});
+
 export function AIInputSheet() {
 	const { myAppContext, setMyAppContext } = useAppContext();  
 		
 	const form = useForm < z.infer < typeof formSchema >> ({
 		resolver: zodResolver(formSchema)
 	});
+
+
+	const formFreeHand = useForm < z.infer < typeof formFreeHandSchema >> ({
+		resolver: zodResolver(formFreeHandSchema)
+	});
+
 	const {formState:{errors}} = form;
+	// const {formFreeHandState:{errors}} = formFreeHand;
 	const [isSheetOpen, setIsSheetOpen] = useState(false);
 
 	function onSubmit(values: z.infer < typeof formSchema > ) {
@@ -87,6 +100,36 @@ export function AIInputSheet() {
 			toast.error("Failed to submit the form. Please try again.");
 		}
 	}
+
+
+	function onSubmitFreeHand(values: z.infer < typeof formFreeHandSchema > ) {
+		try {
+			const filepath = values.filepath;
+			const totalrows = values.totalrows;
+			 
+			setIsSheetOpen(false);
+			
+			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, "truncatecsv", {filepath: filepath, totalrows: totalrows})
+				.then((data) => {
+					setMyAppContext({...myAppContext, dataTable: data});
+				})
+				.catch((error) => {
+					console.error("Error fetching data:", error);
+					toast.error("Failed to fetch data. Please try again.");
+				});
+			
+					
+			toast(
+				<pre className="mt-2 w-[340px] max-h-[200px] rounded-md p-4 overflow-y-auto whitespace-pre-wrap break-words">
+					<code>{JSON.stringify(values, null, 2)}</code>
+				</pre>
+			);
+		} catch (error) {
+			console.error("Form submission error", error);
+			toast.error("Failed to submit the form. Please try again.");
+		}
+	}
+
 	function listFiles () {
 		processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, "listfiles", {})
 		.then((data) => {
@@ -122,68 +165,124 @@ export function AIInputSheet() {
 							Select appropriate log duration and action to interact with AI log analyser
 					</SheetDescription>
 				</SheetHeader>
-				<Form {...form}>
-					<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-3xl mx-auto py-10">
-						<div className="grid gap-4 py-4 px-4">
-							<FormField
-								control={form.control}
-								name="ddlLogDuration"
-								render={({ field }) => (
-								<FormItem>
-										<FormLabel>Log duration</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
-											<FormControl>
-													<SelectTrigger>
-													<SelectValue placeholder="Select log duration" />
-													</SelectTrigger>
-											</FormControl>
-											<SelectContent>
-													<SelectItem value="1">Last 1 hr</SelectItem>
-													<SelectItem value="2">Last 2 hrs</SelectItem>
-													<SelectItem value="6">Last 6 hrs</SelectItem>
-													<SelectItem value="12">Last 12 hrs</SelectItem>
-													<SelectItem value="24">Last 24 hrs</SelectItem>
-													<SelectItem value="48">Last 48 hrs</SelectItem>
-											</SelectContent>
-										</Select>
-										<FormDescription>Select the log duration (eg: Last 12hrs, Last 24hrs, Last 48hrs etc)</FormDescription>
-										<FormMessage />
-								</FormItem>
-								)}
-							/>
-							
-							<FormField
-								control={form.control}
-								name="ddlAction"
-								render={({ field }) => (
-									<FormItem>
-										<FormLabel>Action</FormLabel>
-										<Select onValueChange={field.onChange} defaultValue={field.value}>
-										<FormControl>
-												<SelectTrigger>
-												<SelectValue placeholder="Select action" />
-												</SelectTrigger>
-										</FormControl>
-										<SelectContent>
-												<SelectItem value="rawlog">Show raw log</SelectItem>
-												<SelectItem value="classifiedlog">Show AI classified log</SelectItem>
-												<SelectItem value="summarylog">Show AI summarised log</SelectItem>
-										</SelectContent>
-										</Select>
-										<FormDescription>Select which action you would like to perform</FormDescription>
-										<FormMessage />
-									</FormItem>
-									)}
-							/>
 
-							
-							
-							<Button className="w-full">Send to AI</Button>
-							
-							
-						</div>
-					</form>
-				</Form>
+				<Accordion type="multiple" className="px-5">
+					<AccordionItem value="sendtoai">
+						<AccordionTrigger>Send to AI</AccordionTrigger>
+						<AccordionContent>
+							<Form {...form}>
+								<form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-3xl mx-auto">
+									<div className="grid gap-4 px-4">
+										<FormField
+											control={form.control}
+											name="ddlLogDuration"
+											render={({ field }) => (
+											<FormItem>
+													<FormLabel>Log duration</FormLabel>
+													<Select onValueChange={field.onChange} defaultValue={field.value}>
+														<FormControl>
+																<SelectTrigger>
+																<SelectValue placeholder="Select log duration" />
+																</SelectTrigger>
+														</FormControl>
+														<SelectContent>
+																<SelectItem value="1">Last 1 hr</SelectItem>
+																<SelectItem value="2">Last 2 hrs</SelectItem>
+																<SelectItem value="6">Last 6 hrs</SelectItem>
+																<SelectItem value="12">Last 12 hrs</SelectItem>
+																<SelectItem value="24">Last 24 hrs</SelectItem>
+																<SelectItem value="48">Last 48 hrs</SelectItem>
+														</SelectContent>
+													</Select>
+													<FormDescription>Select the log duration (eg: Last 12hrs, Last 24hrs, Last 48hrs etc)</FormDescription>
+													<FormMessage />
+											</FormItem>
+											)}
+										/>
+										
+										<FormField
+											control={form.control}
+											name="ddlAction"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Action</FormLabel>
+													<Select onValueChange={field.onChange} defaultValue={field.value}>
+													<FormControl>
+															<SelectTrigger>
+															<SelectValue placeholder="Select action" />
+															</SelectTrigger>
+													</FormControl>
+													<SelectContent>
+															<SelectItem value="rawlog">Show raw log</SelectItem>
+															<SelectItem value="classifiedlog">Show AI classified log</SelectItem>
+															<SelectItem value="summarylog">Show AI summarised log</SelectItem>
+													</SelectContent>
+													</Select>
+													<FormDescription>Select which action you would like to perform</FormDescription>
+													<FormMessage />
+												</FormItem>
+												)}
+										/>
+
+										
+										
+										<Button className="w-full">Send to AI</Button>
+										
+										
+									</div>
+								</form>
+							</Form>
+
+						</AccordionContent>
+					</AccordionItem>
+
+					<AccordionItem value="truncate">
+						<AccordionTrigger>Truncate CSV</AccordionTrigger>
+						<AccordionContent>
+							<Form {...formFreeHand}>
+								<form onSubmit={formFreeHand.handleSubmit(onSubmitFreeHand)} className="space-y-8 max-w-3xl mx-auto py-1">
+									<div className="grid gap-4 py-4 px-4">
+										<FormField
+											control={formFreeHand.control}
+											name="filepath"
+											render={({ field }) => (
+											<FormItem>
+													<FormLabel>File Path</FormLabel>
+													<Input type="text" placeholder="Enter file path" {...field} />
+													
+													<FormMessage />
+											</FormItem>
+											)}
+										/>
+										
+										<FormField
+											control={formFreeHand.control}
+											name="totalrows"
+											render={({ field }) => (
+												<FormItem>
+													<FormLabel>Total Rows</FormLabel>
+													<Input type="text" placeholder="Enter total rows" {...field} />
+													
+													<FormMessage />
+												</FormItem>
+												)}
+										/>
+
+										
+										
+										<Button className="w-full">Truncate</Button>
+										
+										
+									</div>
+								</form>
+							</Form>
+
+						</AccordionContent>
+					</AccordionItem>
+				</Accordion>
+
+				
+				
 				<div className="border rounded p-4 bg-white dark:bg-gray-800 shadow-md">
 					<h2 className="text-lg font-semibold mb-2">Files List</h2>
 					<Button variant="outline" size="icon" onClick={listFiles}>

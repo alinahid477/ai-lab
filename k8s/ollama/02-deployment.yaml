@@ -65,7 +65,7 @@ spec:
         runAsNonRoot: false
       serviceAccountName: scc-admin
       containers:
-      - image: quay.io/rh-ee-anahid/ollama-granite:v6
+      - image: quay.io/rh-ee-anahid/ollama-granite:v7
         imagePullPolicy: Always
         name: ollama-granite
         ports:

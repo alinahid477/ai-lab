@@ -5,6 +5,7 @@ import json
 from websocket import create_connection
 import glob
 import time
+from datetime import datetime, timedelta
 
 async def send_to_websocket(data):
     try:
@@ -48,6 +49,7 @@ def display_logs_from_dataframe(df, page, rowcount):
     
     jsonData = get_json(dfittr, "dataframe", page, rowcount)
     jsonData['totalrow'] = len(df)
+    send_to_websocket_sync({"type": "terminalinfo", "data": f"Displaying from {page*rowcount} to {page*rowcount + rowcount} of {jsonData['totalrow']}"})
     return jsonData
 
 def display_logs_from_csv(filepath, page, rowcount):
@@ -98,6 +100,35 @@ def get_json(df_ittr, filepath, page, rowcount):
             print(f"Error processing row {index}: {e}")
     return result
 
+def dataframe_to_csv(df, filesuffix, fileprefix="classified"):
+    dir=os.path.dirname(filesuffix)
+    if dir is None or dir == "": 
+        dir="/tmp/logs"
+        filename = f"{fileprefix}_{filesuffix}_{datetime.now().strftime('%Y%m%d%H%M')}.csv"
+    else: # this means I have provided the original unclassified csv file fullpath 
+        filename = f"{fileprefix}_{os.path.basename(filesuffix)}"
+    
+    classified_file = os.path.join(dir, filename)
+    df.to_csv(classified_file, index=False)
+    
+    return {"filename": classified_file}
+
+
+def truncate_csv(filepath, totalrows):
+    send_to_websocket_sync({"type": "terminalinfo", "data": f"truncating CSV: {filepath} to rows {totalrows}"})
+    try:
+        if not os.path.exists(filepath):
+            raise FileNotFoundError(f"The file {filepath} does not exist.")
+        trows=int(totalrows)
+        df = pd.read_csv(filepath, nrows=trows)
+        send_to_websocket_sync({"type": "terminalinfo", "data": f"Truncated: {filepath} to: {trows}"})
+        csv = dataframe_to_csv(df, filepath, "truncated")
+        jsonData = display_logs_from_dataframe(df, 0, 100)
+        jsonData['filepath'] = csv["filename"]
+        return jsonData
+    except Exception as e:
+        send_to_websocket_sync({"type": "terminalinfo", "data": f"Error reading data from file: {filepath}. Exception: {e}"})
+        return {"error": f"Failed to read data from file: {filepath}. Exception: {e}"}
 
 def listfiles():
   # Set the directory and the max allowed files
