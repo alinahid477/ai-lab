@@ -1,0 +1,2 @@
+AIBACKEND_SERVER=http://127.0.0.1:8000
+WSSERVER=ws://localhost:8765

@@ -99,6 +99,18 @@ def get_json(df_ittr, filepath, page, rowcount):
     return result
 
 
+def listfiles():
+  # Set the directory and the max allowed files
+  log_dir = "/tmp/logs"
+  max_files = 15
+
+  # Get a list of all files in the directory
+  files = glob.glob(os.path.join(log_dir, '*'))
+
+  # Sort files by creation time in descending order
+  files_sorted = sorted(files, key=os.path.getctime, reverse=True)
+  return files_sorted  
+
 
 def cleanup():
   # Set the directory and the max allowed files

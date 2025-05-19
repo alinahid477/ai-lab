@@ -117,21 +117,23 @@ export default function Home() {
                 <DataTable columns={columns} data={myAppContext.dataTable.data} />
               </div>
             )}
-            {myAppContext.summarydata?.summary ? (
-              <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
-                {/* Render summarize content here */}
-                <SummaryDisplayer data={myAppContext.summarydata}/>
-              </div>
-            ): (
-              <>
-                <p className="text-red-600">
-                  Error from Model. It returned empty logs summary. It shouldn't have done that. May be the model is too small to handle this many logs data.
-                </p>
-                <p>
-                  Try a bigger model.
-                </p>
-              </>
-              
+            {myAppContext.summarydata && (
+              myAppContext.summarydata.summary ? (
+                <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
+                  {/* Render summarize content here */}
+                  <SummaryDisplayer data={myAppContext.summarydata}/>
+                </div>
+              ): (
+                <>
+                  <p className="text-red-600">
+                    Error from Model. It returned empty logs summary. It shouldn&apos;t have done that. May be the model is too small to handle this many logs data.
+                  </p>
+                  <p>
+                    Try a bigger model.
+                  </p>
+                </>
+                
+              )
             )}
           </li>
 

@@ -58,6 +58,11 @@ export async function processAction(AIBACKEND_SERVER:string, action: string, par
       str = `summarize?filepath=${paramsKeyValueObj["filepath"]}`;
       theaction="summarize"
     }
+  } else if (action === "listfiles") {
+    if (Object.keys(paramsKeyValueObj).length === 0) {
+      str = `listfiles`;
+      theaction="listfiles"
+    }
   }
   
   if (str && str.length > 0) {

@@ -114,7 +114,7 @@ const getPrompt = (line: React.ReactNode, index: number): React.ReactNode => {
         </div>
         );
     }
-    return <div key={index}>{line}</div>;
+    return <pre key={index} className="flex" style={{ userSelect: 'text' }}><code>{line}</code></pre>;
 };
 
 const formatTimestamp = (timestamp: number): string => {
@@ -296,6 +296,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
 
     return (
       <div
+        style={{ userSelect: "text" }} 
         className="flex flex-col text-black dark:text-white bg-[#afafaf96] dark:bg-[#300924] rounded-md w-full h-full font-mono"
         onFocus={handleFocusInput}
         onBlur={handleBlur}
@@ -310,7 +311,7 @@ export function Terminal({ commands, machinename, username, initialFeed = "AI Te
             AI Terminal
           </div>
         </div>
-        <div className="overflow-y-auto pt-4 px-2 max-h-[400px]" ref={wrapperRef}>
+        <div style={{ userSelect: "text", pointerEvents: "auto" }} className="overflow-y-auto pt-4 px-2 max-h-[400px]" ref={wrapperRef}>
           <TypeAnimation speed={90} cursor={false} sequence={[initialFeed]} />
           {output.map(getPrompt)}
           <div className="flex relative">

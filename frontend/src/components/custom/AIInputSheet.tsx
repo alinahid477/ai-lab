@@ -1,6 +1,6 @@
 import {
   Sheet,
-  SheetClose,
+//   SheetClose,
   SheetContent,
   SheetDescription,
   SheetFooter,
@@ -15,6 +15,7 @@ import {zodResolver} from "@hookform/resolvers/zod"
 import * as z from "zod"
 // import {cn} from "@/lib/utils"
 import {Button} from "@/components/ui/button"
+import { RotateCcw } from "lucide-react";
 
 import { useAppContext } from "@/context/AppContext";
 
@@ -38,10 +39,10 @@ import {
 } from "@/components/ui/select"
 	
 
-import samplelogs from "@/lib/sample-logs.json"
+// import samplelogs from "@/lib/sample-logs.json"
 
 import {processAction} from "@/lib/utils"
-import { errorToJSON } from "next/dist/server/render"
+// import { errorToJSON } from "next/dist/server/render"
 
 import jsondata from "@/lib/summarize.json" assert { type: "json" };
 
@@ -85,6 +86,16 @@ export function AIInputSheet() {
 			console.error("Form submission error", error);
 			toast.error("Failed to submit the form. Please try again.");
 		}
+	}
+	function listFiles () {
+		processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, "listfiles", {})
+		.then((data) => {
+			setMyAppContext({...myAppContext, fileslist: data});
+		})
+		.catch((error) => {
+			console.error("Error fetching data:", error);
+			toast.error("Failed to fetch file list in /tmp/logs/ dir. Please try again.");
+		});
 	}
   return (
 		<Sheet
@@ -165,16 +176,32 @@ export function AIInputSheet() {
 									)}
 							/>
 
-							<Button onClick={() => setMyAppContext({...myAppContext, summary: jsondata})}>display sample summary</Button>
-
+							
+							
 							<Button className="w-full">Send to AI</Button>
 							
 							
 						</div>
 					</form>
 				</Form>
+				<div className="border rounded p-4 bg-white dark:bg-gray-800 shadow-md">
+					<h2 className="text-lg font-semibold mb-2">Files List</h2>
+					<Button variant="outline" size="icon" onClick={listFiles}>
+						<RotateCcw className="h-4 w-4" />
+						<span className="sr-only">Refresh</span>
+					</Button>
+					{myAppContext.fileslist && myAppContext.fileslist.length > 0 && (
+						<ul className="list-disc list-inside space-y-1">
+						{myAppContext.fileslist.map((filePath: string, index: number) => (
+							<li key={index} className="break-all text-sm text-gray-800 dark:text-gray-200">
+							{filePath}
+							</li>
+						))}
+						</ul>
+					)}
+				</div>
 				<SheetFooter>
-					&
+					<Button className="w-20" onClick={() => setMyAppContext({...myAppContext, summarydata: jsondata})}>sample</Button>
 				</SheetFooter>
 			</SheetContent>
 				

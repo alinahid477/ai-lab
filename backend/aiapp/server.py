@@ -88,3 +88,15 @@ async def process_english_command(command: str):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         print(f"Processed english command: {command}")
+
+
+@app.get("/listfiles")
+async def list_files():
+    try:
+        files = utils.listfiles()
+        print(f"FILES: {files}")
+        return files
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        print("Processed listing files in /tmp/logs dir")
