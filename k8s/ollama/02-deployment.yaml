@@ -14,6 +14,32 @@ spec:
   storageClassName: gp3-csi
 
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: scc-admin
+  namespace: ollama
+imagePullSecrets:
+- name: myquaycred
+# oc adm policy add-scc-to-user privileged -z scc-admin -n ollama 
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  creationTimestamp: null
+  name: system:openshift:scc:privileged
+  namespace: ollama
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: system:openshift:scc:privileged
+subjects:
+- kind: ServiceAccount
+  name: scc-admin
+  namespace: ollama
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,10 +57,15 @@ spec:
       labels:
         app: ollama-granite
     spec:
-      imagePullSecrets:
-      - name: myquaycred
+      # RUN AS PRIVILLEGED USER; BECAUSE ollama create models was done as root. and in order to find those model
+      # the image needs to run in privilleged mode.
+      # TODO: Need to create the docker image in a different way so that ollama create is run as user.
+      securityContext:
+        runAsUser: 0
+        runAsNonRoot: false
+      serviceAccountName: scc-admin
       containers:
-      - image: quay.io/rh-ee-anahid/ollama-granite:v5
+      - image: quay.io/rh-ee-anahid/ollama-granite:v6
         imagePullPolicy: Always
         name: ollama-granite
         ports:

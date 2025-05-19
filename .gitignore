@@ -56,7 +56,6 @@ frontend/.next/*
 
 backend/aiapp/__pycache__
 training/tmp.txt
-training/ollama/granite-3.3-2b-instruct-Q4_K_M.gguf
 backend/aiapp/classes/tmp.json
 
 
@@ -64,5 +63,5 @@ instructlab/*
 !instructlab/README.md
 
 training_results
-training/ollama/pytorch_model-Q4_K_M.gguf
-training/ollama/ilab-trained-granite-7b-Q4_K_M.gguf
+
+*.gguf

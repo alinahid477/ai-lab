@@ -8,7 +8,7 @@ WORKDIR /app
 
 COPY Modelfile.granite .
 COPY Modelfile .
-COPY granite-3.3-2b-instruct-Q4_K_M.gguf .
+COPY granite-3.3-8b-instruct-Q4_K_M.gguf .
 COPY ilab-trained-granite-7b-Q4_K_M.gguf .
 COPY ollama-start.sh .
 RUN chmod +x ollama-start.sh
@@ -31,7 +31,7 @@ RUN echo "Starting Ollama server in background..." \
     && sleep 2 \
     && echo "Creating model from Modelfile.granite..." \
     && sleep 3 \
-    && ollama create granite-3.3-2b -f Modelfile.granite \
+    && ollama create granite-3.3-8b-instruct -f Modelfile.granite \
     && sleep 2 \
     && echo "Listing models under ollama..." \
     && ollama list

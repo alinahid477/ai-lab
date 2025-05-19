@@ -107,7 +107,7 @@ const ChatInterface: React.FC = () => {
           if(typeof data === "object" && data !== null) {
             if ("action" in data) {
               if(data.action === "summarize") {
-                setMyAppContext({...myAppContext, summary: data});
+                setMyAppContext({...myAppContext, summarydata: data});
               } else {
                 setMyAppContext({...myAppContext, dataTable: data});
               }

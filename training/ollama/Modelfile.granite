@@ -1,1 +1,1 @@
-FROM ./granite-3.3-2b-instruct-Q4_K_M.gguf
+FROM ./granite-3.3-8b-instruct-Q4_K_M.gguf

@@ -1,3 +1,4 @@
+---
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
@@ -13,3 +14,34 @@ spec:
   port:
     targetPort: 3000
     
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: backend-aiapp-route
+  namespace: intellilogs
+spec:
+  host: backend-aiapp.apps.cluster-cvh69.cvh69.sandbox305.opentlc.com
+  path: /
+  to:
+    kind: Service
+    name: backend-aiapp
+    weight: 100
+  port:
+    targetPort: 8000
+
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: backend-wsserver-route
+  namespace: intellilogs
+spec:
+  host: backend-wsserver.apps.cluster-cvh69.cvh69.sandbox305.opentlc.com
+  path: /
+  to:
+    kind: Service
+    name: backend-wsserver
+    weight: 100
+  port:
+    targetPort: 8765
