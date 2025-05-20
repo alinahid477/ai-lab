@@ -55,7 +55,8 @@ const formSchema = z.object({
 
 const formFreeHandSchema = z.object({
 	filepath: z.string(),
-	totalrows: z.string()
+	totalrows: z.string(),
+	skiprows: z.string().nullable().optional(),
 });
 
 export function AIInputSheet() {
@@ -106,10 +107,10 @@ export function AIInputSheet() {
 		try {
 			const filepath = values.filepath;
 			const totalrows = values.totalrows;
-			 
+			const skiprows = values.skiprows;
 			setIsSheetOpen(false);
 			
-			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, "truncatecsv", {filepath: filepath, totalrows: totalrows})
+			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, "truncatecsv", {filepath: filepath, totalrows: totalrows, skiprows: skiprows})
 				.then((data) => {
 					setMyAppContext({...myAppContext, dataTable: data});
 				})
@@ -261,14 +262,25 @@ export function AIInputSheet() {
 											render={({ field }) => (
 												<FormItem>
 													<FormLabel>Total Rows</FormLabel>
-													<Input type="text" placeholder="Enter total rows" {...field} />
+													<Input type="text" placeholder="Enter total rows (useful for trucating from bottom)" {...field} />
 													
 													<FormMessage />
 												</FormItem>
 												)}
 										/>
 
-										
+										<FormField
+											control={formFreeHand.control}
+											name="skiprows"
+											render={({ field }) => (
+											<FormItem>
+												<FormLabel>Skip rows</FormLabel>
+												<Input type="text" placeholder="Enter row to skip (useful for trucating from top)" {...field} value={field.value ?? ""} />
+												
+												<FormMessage />
+											</FormItem>
+											)}
+										/>
 										
 										<Button className="w-full">Truncate</Button>
 										

@@ -102,11 +102,12 @@ async def list_files():
         print("Processed listing files in /tmp/logs dir")
 
 @app.get("/truncatecsv")
-async def truncate_csv(filepath, totalrows):
+async def truncate_csv(filepath, totalrows, skiprows=0):
     try:
         send_message_to_ws(f"Processing truncating csv {filepath} to {totalrows} rows")
         print(f"Processing truncating csv {filepath} to {totalrows} rows...")
-        return utils.truncate_csv(filepath, totalrows)
+        json = utils.truncate_csv(filepath, totalrows, skiprows)
+        return json
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:

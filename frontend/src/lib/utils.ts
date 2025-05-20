@@ -66,6 +66,9 @@ export async function processAction(AIBACKEND_SERVER:string, action: string, par
   } else if (action === "truncatecsv") {
     if (paramsKeyValueObj && "filepath" in paramsKeyValueObj && "totalrows" in paramsKeyValueObj) {
       str = `truncatecsv?filepath=${paramsKeyValueObj["filepath"]}&totalrows=${paramsKeyValueObj["totalrows"]}`;
+      if ("skiprows" in paramsKeyValueObj && paramsKeyValueObj.skiprows) {
+        str += `&skiprows=${paramsKeyValueObj["skiprows"]}`;
+      }
       theaction="truncatecsv"
     }
   } else if (action === "downloadcsv" || action === "downloadfile") {
@@ -77,10 +80,7 @@ export async function processAction(AIBACKEND_SERVER:string, action: string, par
   
   if (str && str.length > 0) {
     try {
-      console.log("********************")
-      const data = await fetchData(AIBACKEND_SERVER, str)
-      
-      console.log("HEEEEEHE")
+      const data = await fetchData(AIBACKEND_SERVER, str)      
       if(data && (data.rowcount || /summarize\?/i.test(str))) {
         return {...data, action: theaction}
       } else {

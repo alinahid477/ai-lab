@@ -45,8 +45,7 @@ def display_logs_from_dataframe(df, page, rowcount):
     if rowcount == -100:  # -100 will mean give me all rows
         dfittr = df.iterrows()
     else:
-        dfittr = df.iloc[page*rowcount:page*rowcount + rowcount].iterrows()
-    
+        dfittr = (df.iloc[page*rowcount:page*rowcount + rowcount].reset_index(drop=True)).iterrows()
     jsonData = get_json(dfittr, "dataframe", page, rowcount)
     jsonData['totalrow'] = len(df)
     send_to_websocket_sync({"type": "terminalinfo", "data": f"Displaying from {page*rowcount} to {page*rowcount + rowcount} of {jsonData['totalrow']}"})
@@ -79,6 +78,7 @@ def display_logs_from_csv(filepath, page, rowcount):
 def get_json(df_ittr, filepath, page, rowcount):
     send_to_websocket_sync({"type": "terminalinfo", "data": f"Preparing data for display"})
     result = {'filepath': filepath, 'page': page, 'rowcount': rowcount, 'data': []}
+        
     for index, row in df_ittr:
         if index > rowcount:
             break
@@ -114,13 +114,28 @@ def dataframe_to_csv(df, filesuffix, fileprefix="classified"):
     return {"filename": classified_file}
 
 
-def truncate_csv(filepath, totalrows):
+def truncate_csv(filepath, totalrows, skiprows):
     send_to_websocket_sync({"type": "terminalinfo", "data": f"truncating CSV: {filepath} to rows {totalrows}"})
     try:
         if not os.path.exists(filepath):
             raise FileNotFoundError(f"The file {filepath} does not exist.")
         trows=int(totalrows)
-        df = pd.read_csv(filepath, nrows=trows)
+        skip=0
+        if skiprows:
+            skip=int(skiprows)
+        if skip > 0:
+            df = pd.read_csv(filepath).head(2)
+            if "classification" in df.columns:
+                df = pd.read_csv(filepath, nrows=trows, names=["timestamp", "namespace_name","app_name","level","log_type","message", "classification"])
+            else:
+                df = pd.read_csv(filepath, nrows=trows, names=["timestamp", "namespace_name","app_name","level","log_type","message"])
+            # this grabs labels for rows 1,2,…,200
+            to_skip = df.index[:skip]       
+            df2     = df.drop(index=to_skip)
+            # If you want to re‐number your remaining rows from 0 upward:
+            df = df2.reset_index(drop=True)
+        else:
+            df = pd.read_csv(filepath, nrows=trows)
         send_to_websocket_sync({"type": "terminalinfo", "data": f"Truncated: {filepath} to: {trows}"})
         csv = dataframe_to_csv(df, filepath, "truncated")
         jsonData = display_logs_from_dataframe(df, 0, 100)
@@ -128,7 +143,7 @@ def truncate_csv(filepath, totalrows):
         return jsonData
     except Exception as e:
         send_to_websocket_sync({"type": "terminalinfo", "data": f"Error reading data from file: {filepath}. Exception: {e}"})
-        return {"error": f"Failed to read data from file: {filepath}. Exception: {e}"}
+        return {"error": f"Failed to truncate file: {filepath}. Exception: {e}"}
 
 def listfiles():
   # Set the directory and the max allowed files

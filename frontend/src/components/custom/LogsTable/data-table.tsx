@@ -27,7 +27,7 @@ import {Button} from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X, FileDown } from "lucide-react"
-
+import DownloadButton from "../DownloadButton"
 import {DataTableFacetedFilter} from "@/components/custom/LogsTable/data-table-faceted-filter"
 import { priorities, statuses } from "./data"
 
@@ -203,7 +203,6 @@ export function DataTable<TData extends LogData, TValue>({
           });
     }
   }
-
   return (
     <>
       
@@ -241,27 +240,10 @@ export function DataTable<TData extends LogData, TValue>({
             <X />
           </Button>
         )}
-          <Button variant="ghost" className="h-8 px-2 lg:px-3" onClick={()=>{
-            processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, "downloadfile", {filepath: myAppContext.dataTable.filepath})
-            .then((data) => {
-              console.log(data);
-              (data as Response).blob().then((blob) => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                const fileName = myAppContext.dataTable.filepath.match(/[^\\/]+$/)?.[0];
-                a.download = fileName; // Set the desired file name
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-              })
-            })
-            .catch((error) => {
-              console.error("Error fetching data:", error);
-              toast.error("Failed to fetch data. Please try again.");
-            });
-          }}><FileDown/> Download</Button>
+          <DownloadButton
+            filepath={myAppContext.dataTable.filepath}
+            downloadFilename='download.csv'  // optional
+          />
         </div>
       </div>
       <div className="rounded-md border">
