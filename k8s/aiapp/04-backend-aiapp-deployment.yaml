@@ -25,6 +25,20 @@ subjects:
   namespace: intellilogs
 
 ---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: backend-aiapp-logs-pvc
+  namespace: intellilogs
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: gp3-csi
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -61,7 +75,7 @@ spec:
               mountPath: /mnt/models/logclassifier/1
       containers:
         - name: backend-aiapp
-          image: quay.io/rh-ee-anahid/backend-aiapp:v3
+          image: quay.io/rh-ee-anahid/backend-aiapp:v5
           ports:
             - containerPort: 8000
           envFrom:
@@ -70,9 +84,14 @@ spec:
           volumeMounts:
             - name: model-volume
               mountPath: /mnt/models/logclassifier/1
+            - name: logs-volume
+              mountPath: /tmp/logs
       volumes:
         - name: model-volume
           emptyDir: {}
+        - name: logs-volume
+          persistentVolumeClaim:
+            claimName: backend-aiapp-logs-pvc
 
 ---
 apiVersion: v1

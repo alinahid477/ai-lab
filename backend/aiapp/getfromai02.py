@@ -33,7 +33,14 @@ async def callAI(purpose, prompt, format = "json", modelname="noparampassed" ,ke
   headers = {
     "Content-Type": "application/json"
   }
-  if purpose != "command":
+  if purpose == "summarize":
+    model_name = chat_ai_model_name
+    url = os.getenv("COMMAND_AI_ENDPOINT")
+    payload["options"] = {
+      "num_ctx": 10000
+    }
+
+  if purpose != "command" and purpose != "summarize":
     model_name = chat_ai_model_name
     url = os.getenv("CHAT_AI_ENDPOINT")
     conversation_history.append({"role": "user", "content": prompt})
@@ -43,8 +50,75 @@ async def callAI(purpose, prompt, format = "json", modelname="noparampassed" ,ke
     payload = {
         "model": model_name,
         "messages": conversation_history[-5:],  # Keep only the last 5 messages
+        "format": format,
+        "options": {
+          "num_ctx": 10000,
+          "temperature": 0.7,
+          "top_p": 1
+        },
+        "stream": False,
+        "keep_alive": "2m" 
+    }
+    authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
+    headers["Authorization"] = f"Bearer {authtoken}"
+
+  print(f"calling --> {url}, {model_name}")
+  async with aiohttp.ClientSession() as session:
+    async with session.post(url, json=payload, headers=headers) as response:
+      if response.status == 200:
+        data = await response.json()
+        if purpose != "command" and purpose != "summarize":
+          # Extract the assistant's reply
+          assistant_message = data["choices"][0]["message"]["content"].strip()
+          data["response"] = assistant_message
+          # Append the assistant's reply to the conversation history
+          conversation_history.append({"role": "assistant", "content": assistant_message})
+        return data
+      else:
+        text = await response.text()
+        raise Exception(f"Error {response.status}: {text}")
+          
+
+async def callAI2(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
+
+  # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
+  if modelname == "noparampassed":
+    modelname=command_ai_model_name
+
+  model_name = modelname
+  url = os.getenv("COMMAND_AI_ENDPOINT")
+  payload = {
+        "model": model_name,
+        "prompt": prompt,
+        "stream": False,
+        "keep_alive": keep_alive
+    }
+  if format == "json":
+    payload["format"] = "json"
+  headers = {
+    "Content-Type": "application/json"
+  }
+  # if purpose == "summarize":
+  #   model_name = chat_ai_model_name
+  #   url = os.getenv("COMMAND_AI_ENDPOINT")
+  #   payload["options"] = {
+  #     "num_ctx": 30000
+  #   }
+
+  if purpose != "command":
+    model_name = chat_ai_model_name
+    url = os.getenv("CHAT_AI_ENDPOINT")
+    if purpose == "summarize":
+      conversation_history.clear()  
+    conversation_history.append({"role": "user", "content": prompt})
+    if len(conversation_history) > 10:
+      # Remove the oldest messages to keep only the last 10
+      conversation_history[:] = conversation_history[-10:]
+    payload = {
+        "model": model_name,
+        "messages": conversation_history[-5:],  # Keep only the last 5 messages
         "temperature": 0.7,
-        "top_p": 1
+        "top_p": 1 
     }
     authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
     headers["Authorization"] = f"Bearer {authtoken}"
@@ -59,12 +133,80 @@ async def callAI(purpose, prompt, format = "json", modelname="noparampassed" ,ke
           assistant_message = data["choices"][0]["message"]["content"].strip()
           data["response"] = assistant_message
           # Append the assistant's reply to the conversation history
-          conversation_history.append({"role": "assistant", "content": assistant_message})
+          if purpose != "summarize":
+            conversation_history.append({"role": "assistant", "content": assistant_message})
         return data
       else:
         text = await response.text()
         raise Exception(f"Error {response.status}: {text}")
-          
+
+async def callAI3(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
+
+  # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
+  if modelname == "noparampassed":
+    modelname=command_ai_model_name
+
+  model_name = modelname
+  url = os.getenv("COMMAND_AI_ENDPOINT")
+  payload = {
+        "model": model_name,
+        "prompt": prompt,
+        "stream": False,
+        "keep_alive": keep_alive
+    }
+  if format == "json":
+    payload["format"] = "json"
+  headers = {
+    "Content-Type": "application/json"
+  }
+  # if purpose == "summarize":
+  #   model_name = chat_ai_model_name
+  #   url = os.getenv("COMMAND_AI_ENDPOINT")
+  #   payload["options"] = {
+  #     "num_ctx": 30000
+  #   }
+
+  if purpose != "command":
+    model_name = "gemma3:4b" # chat_ai_model_name
+    url = os.getenv("CHAT_AI_ENDPOINT")
+    if purpose == "summarize":
+      conversation_history.clear()  
+    conversation_history.append({"role": "user", "content": prompt})
+    if len(conversation_history) > 10:
+      # Remove the oldest messages to keep only the last 10
+      conversation_history[:] = conversation_history[-10:]
+    payload = {
+        "model": model_name,
+        "messages": conversation_history[-5:],  # Keep only the last 5 messages
+        "format": format,
+        "options": {
+          "num_ctx": 20000,
+          "temperature": 0.7,
+          "top_p": 1
+        },
+        "stream": False,
+        "keep_alive": "0" 
+    }
+    authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
+    headers["Authorization"] = f"Bearer {authtoken}"
+
+  print(f"calling --> {url}, {model_name}")
+  async with aiohttp.ClientSession() as session:
+    async with session.post(url, json=payload, headers=headers) as response:
+      if response.status == 200:
+        data = await response.json()
+        if purpose != "command":
+          # Extract the assistant's reply
+          print(data)
+          assistant_message = data["message"]["content"].strip()
+          data["response"] = assistant_message
+          # Append the assistant's reply to the conversation history
+          if purpose != "summarize":
+            conversation_history.append({"role": "assistant", "content": assistant_message})
+        return data
+      else:
+        text = await response.text()
+        raise Exception(f"Error {response.status}: {text}")
 
 async def send_message_to_ws(message):
   print(f"**sending to ws: {message}")
@@ -113,25 +255,76 @@ async def get_intended_command(english_command):
   return output
 
 
+def estimate_tokens(line):
+    return len(line) // 4 + (1 if len(line) % 4 != 0 else 0)
+
 # summarize logs from file /tmp/test3.notgit.csv
 async def summarize_logs(logs_csv_file_path):
   # print(f"HERE 0 {logs_csv_file_path}")
-  prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
-
+  prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template2.txt"
+  # prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
   with open(prompt_template_path, "r") as file:
     prompt_template = file.read()
 
   # print(f"HERE 1 {logs_csv_file_path}")
   df = pd.read_csv(logs_csv_file_path)
   # print(f"HERE 2")
+
+  ai_response_history = []
+
+  MAX_TOKENS=15000
+  consumed_tokens=0
   # Create a list to store the text lines
   text_lines = []
-
   # Iterate over each row in the DataFrame
   for index, row in df.iterrows():
-      action = "threw" if row['classification'] != "info" else "output"
-      text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
+    action = "threw" if row['classification'] != "info" else "output"
+    text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
+    if consumed_tokens < MAX_TOKENS:
       text_lines.append(text_line)
+      consumed_tokens += estimate_tokens(text_line)
+    else:
+      print(f"CONTEXT: {index}--->{consumed_tokens}")
+      consumed_tokens=0
+      text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
+      prompt = prompt_template.format(
+                      log_type="application",
+                      logs=text_lines_str,
+                      # model_schema=LogAnalysis.model_json_schema(),
+                      stress_prompt="""You are a computer security intern that's really stressed out. 
+                      Use "um" and "ah" a lot.""",
+                  )
+      text_lines.clear()
+      ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
+      response_text = ai_response["response"]
+      ai_response_history.append(response_text)
+      print(f"CONTEXT: {index} --> {response_text}")
+      print("==================================================================")
+      print("==================================================================")
+  if len(text_lines) > 0:
+    consumed_tokens=0
+    text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
+    prompt = prompt_template.format(
+                    log_type="application",
+                    logs=text_lines_str,
+                    model_schema=LogAnalysis.model_json_schema(),
+                    stress_prompt="""You are a computer security intern that's really stressed out. 
+                    Use "um" and "ah" a lot.""",
+                )
+    text_lines.clear()
+    ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
+    response_text = ai_response["response"]
+    ai_response_history.append(response_text)
+    print(f"CONTEXT: {index} --> {response_text}")
+
+  print("==================================================================")
+  print("==================================================================")
+  print("==================================================================")
+  print("==================================================================")
+  print (ai_response_history)
+
+  return
+
   # print(f"HERE 3")
   # # Print the first 5 lines of text_lines
   # for line in text_lines[:5]:
@@ -181,5 +374,5 @@ if __name__ == "__main__":
   # response = asyncio.run(get_intended_command(test_prompt))
   # print(response)
 
-  asyncio.run(summarize_logs("/tmp/test3.nogit.csv"))
+  asyncio.run(summarize_logs("/tmp/logs/classified_20156.nogit.csv"))
   

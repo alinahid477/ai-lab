@@ -50,7 +50,8 @@ import jsondata from "@/lib/summarize.json" assert { type: "json" };
 
 const formSchema = z.object({
 		ddlLogDuration: z.string(),
-		ddlAction: z.string()
+		ddlAction: z.string(),
+		filepath: z.string().nullable().optional(),
 });
 
 const formFreeHandSchema = z.object({
@@ -79,11 +80,25 @@ export function AIInputSheet() {
 		try {
 			const logDuration = parseInt(values.ddlLogDuration, 10);
 			const action = values.ddlAction; 
+			const filepath = values.filepath; 
 			setIsSheetOpen(false);
 			
-			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, action, {duration: logDuration})
+			processAction(myAppContext.ENVVARS.AIBACKEND_SERVER, action, {duration: logDuration, filepath: filepath})
 				.then((data) => {
-					setMyAppContext({...myAppContext, dataTable: data});
+					if(typeof data === "object" && data !== null) {
+						if ("action" in data) {
+						  if(data.action === "summarize") {
+							setMyAppContext({...myAppContext, summarydata: data});
+						  } else {
+							setMyAppContext({...myAppContext, dataTable: data});
+						  }
+						  
+						} else {
+						  throw new Error(JSON.stringify(data));
+						}
+					  } else {
+						throw new Error("fetched data from AI machine is null or undefined. ERROR: "+data);
+					  }
 				})
 				.catch((error) => {
 					console.error("Error fetching data:", error);
@@ -92,7 +107,7 @@ export function AIInputSheet() {
 			
 					
 			toast(
-				<pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
+				<pre className="mt-2 w-[340px] max-h-[200px] rounded-md p-4 overflow-y-auto whitespace-pre-wrap break-words">
 					<code className="text-black">{JSON.stringify(values, null, 2)}</code>
 				</pre>
 			);
@@ -200,7 +215,18 @@ export function AIInputSheet() {
 											</FormItem>
 											)}
 										/>
-										
+										<FormField
+											control={form.control}
+											name="filepath"
+											render={({ field }) => (
+											<FormItem>
+												<FormLabel>File path</FormLabel>
+												<Input type="text" placeholder="Enter file path" {...field} value={field.value ?? ""} />
+												
+												<FormMessage />
+											</FormItem>
+											)}
+										/>
 										<FormField
 											control={form.control}
 											name="ddlAction"
@@ -216,7 +242,7 @@ export function AIInputSheet() {
 													<SelectContent>
 															<SelectItem value="rawlog">Show raw log</SelectItem>
 															<SelectItem value="classifiedlog">Show AI classified log</SelectItem>
-															<SelectItem value="summarylog">Show AI summarised log</SelectItem>
+															<SelectItem value="summarizelogs">Show AI summarised log</SelectItem>
 													</SelectContent>
 													</Select>
 													<FormDescription>Select which action you would like to perform</FormDescription>

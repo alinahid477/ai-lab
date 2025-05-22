@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +18,7 @@ spec:
         - name: myquaycred
       containers:
         - name: backend-wsserver
-          image: quay.io/rh-ee-anahid/backend-wsserver:v4
+          image: quay.io/rh-ee-anahid/backend-wsserver:v5
           ports:
             - containerPort: 8765
           envFrom:

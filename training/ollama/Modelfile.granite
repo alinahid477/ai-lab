@@ -1,2 +1,1 @@
 FROM ./granite-3.3-8b-instruct-Q4_K_M.gguf
-PARAMETER num_ctx 80072

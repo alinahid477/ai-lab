@@ -24,3 +24,4 @@ outlines>=0.2.1
 boto3==1.35.55 
 botocore==1.35.55
 instructlab==0.26.1
+faiss-cpu
