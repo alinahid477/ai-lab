@@ -59,7 +59,7 @@ class LogAnalysis(BaseModel):
     security_events: list[SecurityEvent]
 
     # harware failure events found in the logs.
-    Hardware_failure_events: list[HardwareFailureEvent]
+    hardware_failure_events: list[HardwareFailureEvent]
 
     # # Traffic patterns found in the logs.
     # traffic_patterns: list[WebTrafficPattern]

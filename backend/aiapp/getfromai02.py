@@ -1,11 +1,13 @@
 import utils
 from classes.SentenceAnalysis import SentenceAnalysis
 from classes.LogAnalysis import LogAnalysis
+from backend.aiapp.helpers import deduped_summary
 import aiohttp
 import asyncio
 import json
 import os
 import pandas as pd
+from sentence_transformers import SentenceTransformer
 
 conversation_history = [
     {"role": "system", "content": "You are a helpful assistant."}
@@ -142,7 +144,6 @@ async def callAI2(purpose, prompt, format = "json", modelname="noparampassed" ,k
 
 async def callAI3(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
 
-  # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
   if modelname == "noparampassed":
     modelname=command_ai_model_name
 
@@ -159,15 +160,9 @@ async def callAI3(purpose, prompt, format = "json", modelname="noparampassed" ,k
   headers = {
     "Content-Type": "application/json"
   }
-  # if purpose == "summarize":
-  #   model_name = chat_ai_model_name
-  #   url = os.getenv("COMMAND_AI_ENDPOINT")
-  #   payload["options"] = {
-  #     "num_ctx": 30000
-  #   }
 
   if purpose != "command":
-    model_name = "gemma3:4b" # chat_ai_model_name
+    model_name = chat_ai_model_name
     url = os.getenv("CHAT_AI_ENDPOINT")
     if purpose == "summarize":
       conversation_history.clear()  
@@ -260,18 +255,19 @@ def estimate_tokens(line):
 
 # summarize logs from file /tmp/test3.notgit.csv
 async def summarize_logs(logs_csv_file_path):
-  # print(f"HERE 0 {logs_csv_file_path}")
+  
+  # Initialize the embedding model
+  embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+
+
   prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template2.txt"
-  # prompt_template_path = "/aiapp/prompt_files/summarize_prompt_template.txt"
   with open(prompt_template_path, "r") as file:
     prompt_template = file.read()
 
-  # print(f"HERE 1 {logs_csv_file_path}")
   df = pd.read_csv(logs_csv_file_path)
-  # print(f"HERE 2")
-
-  ai_response_history = []
-
+  
+  # ai_response_history = []
+  deduped_summary_object={}
   MAX_TOKENS=15000
   consumed_tokens=0
   # Create a list to store the text lines
@@ -297,10 +293,13 @@ async def summarize_logs(logs_csv_file_path):
       text_lines.clear()
       ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
       response_text = ai_response["response"]
-      ai_response_history.append(response_text)
-      print(f"CONTEXT: {index} --> {response_text}")
-      print("==================================================================")
-      print("==================================================================")
+      if len(deduped_summary_object) < 1:
+        deduped_summary_object = json.load(response_text)
+      else:
+        deduped_summary.dedupe_summarization_object(deduped_summary_object, json.load(response_text), embedding_model)
+      # ai_response_history.append(response_text)
+      ()
+      print("\n\n")
   if len(text_lines) > 0:
     consumed_tokens=0
     text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
@@ -314,7 +313,8 @@ async def summarize_logs(logs_csv_file_path):
     text_lines.clear()
     ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
     response_text = ai_response["response"]
-    ai_response_history.append(response_text)
+    deduped_summary.dedupe_summarization_object(deduped_summary_object, json.load(response_text), embedding_model)
+    # ai_response_history.append(response_text)
     print(f"CONTEXT: {index} --> {response_text}")
 
   print("==================================================================")
