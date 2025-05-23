@@ -1,0 +1,12 @@
+<start_of_turn>user
+You are an expert in IT systems logs analyst. You are given {numberofobservations} observations made by a human by analysing logs from several different applications. Treat each line as the 1 observation. I would like you to remove any redundant observation. Then also merge and compress into 5 lines only.
+
+<OBSERVATIONS BEGIN>
+
+{observations}
+
+<OBSERVATIONS END>
+
+Provide a refined list of 5 observations as per instruction.
+<end_of_turn>
+<start_of_turn>model

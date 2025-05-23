@@ -1,0 +1,8 @@
+<start_of_turn>user
+You are an expert in IT system log analyst. I have {numberofsummaries} summaries of logs from different time durations that I would like you to merge and compress into a single, concise summary. Please focus on highlighting key patterns, anomalies, and trends, and eliminate any redundant information.
+
+{summaries}
+
+Provide the merged and compressed summary below.
+<end_of_turn>
+<start_of_turn>model

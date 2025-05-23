@@ -6,12 +6,12 @@ WORKDIR /app
 # Set environment variables to disable GPU (CPU mode)
 # ENV OLLAMA_CUDA=0
 
-COPY Modelfile.granite .
+# COPY Modelfile.granite .
 COPY Modelfile .
-COPY granite-3.3-8b-instruct-Q4_K_M.gguf .
+#COPY granite-3.3-8b-instruct-Q4_K_M.gguf .
 COPY ilab-trained-granite-7b-Q4_K_M.gguf .
-COPY ollama-start.sh .
-RUN chmod +x ollama-start.sh
+# COPY ollama-start.sh .
+# RUN chmod +x ollama-start.sh
 # Mount a local directory containing your model
 # VOLUME ["training/models:/app/models"]
 
@@ -29,10 +29,10 @@ RUN echo "Starting Ollama server in background..." \
     && sleep 3 \
     && ollama create ilab-trained-granite-7b -f Modelfile \
     && sleep 2 \
-    && echo "Creating model from Modelfile.granite..." \
+    && echo "Pulling model gemma3:4b-it-qat..." \
     && sleep 3 \
-    && ollama create granite-3.3-8b-instruct -f Modelfile.granite \
-    && sleep 2 \
+    && ollama pull gemma3:4b-it-qat \
+    && sleep 10 \
     && echo "Listing models under ollama..." \
     && ollama list
     

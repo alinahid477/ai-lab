@@ -1,0 +1,12 @@
+<start_of_turn>user
+You are an expert in IT systems logs analyst. You are given {numberofhwfailures} hardware failure events observed by a human by analysing logs from several different applications. Treat each line as the 1 hardware failure event. Each line also contains the ID of the hardware failure event (eg: ID#1). I would like you to remove any redundant hardware failure event. Do not change the text or ID of the hardware failure event. Only remove hardware failure events that you think are redundant.
+
+<HARDWARE_FAILURE_EVENTS BEGIN>
+
+{hwfailures}
+
+<HARDWARE_FAILURE_EVENTS END>
+
+Provide a list of hardware failure events after removing the redundants.
+<end_of_turn>
+<start_of_turn>model

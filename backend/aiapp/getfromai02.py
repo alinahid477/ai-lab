@@ -1,7 +1,7 @@
 import utils
 from classes.SentenceAnalysis import SentenceAnalysis
 from classes.LogAnalysis import LogAnalysis
-from backend.aiapp.helpers import deduped_summary
+from backend.aiapp.helpers import merge_log_summarization
 import aiohttp
 import asyncio
 import json
@@ -192,7 +192,7 @@ async def callAI3(purpose, prompt, format = "json", modelname="noparampassed" ,k
         data = await response.json()
         if purpose != "command":
           # Extract the assistant's reply
-          print(data)
+          # print(data)
           assistant_message = data["message"]["content"].strip()
           data["response"] = assistant_message
           # Append the assistant's reply to the conversation history
@@ -267,7 +267,7 @@ async def summarize_logs(logs_csv_file_path):
   df = pd.read_csv(logs_csv_file_path)
   
   # ai_response_history = []
-  deduped_summary_object={}
+  master_summary_obj={}
   MAX_TOKENS=15000
   consumed_tokens=0
   # Create a list to store the text lines
@@ -293,12 +293,11 @@ async def summarize_logs(logs_csv_file_path):
       text_lines.clear()
       ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
       response_text = ai_response["response"]
-      if len(deduped_summary_object) < 1:
-        deduped_summary_object = json.load(response_text)
+      if len(master_summary_obj) < 1:
+        master_summary_obj = json.load(response_text)
       else:
-        deduped_summary.dedupe_summarization_object(deduped_summary_object, json.load(response_text), embedding_model)
+        merge_log_summarization.merge(master_summary_obj, json.load(response_text), embedding_model)
       # ai_response_history.append(response_text)
-      ()
       print("\n\n")
   if len(text_lines) > 0:
     consumed_tokens=0
@@ -313,7 +312,7 @@ async def summarize_logs(logs_csv_file_path):
     text_lines.clear()
     ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
     response_text = ai_response["response"]
-    deduped_summary.dedupe_summarization_object(deduped_summary_object, json.load(response_text), embedding_model)
+    merge_log_summarization.merge(master_summary_obj, json.load(response_text), embedding_model)
     # ai_response_history.append(response_text)
     print(f"CONTEXT: {index} --> {response_text}")
 

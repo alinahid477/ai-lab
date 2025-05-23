@@ -1,0 +1,12 @@
+<start_of_turn>user
+You are an expert in IT systems logs analyst. You are given {numberofplannings} plannings made by a human by analysing logs from several different applications. Treat each line as the 1 planning. I would like you to remove any redundant planning. Then also merge and compress into 5 lines only.
+
+<PLANNINGS BEGIN>
+
+{plannings}
+
+<PLANNINGS END>
+
+Provide a refined list of 5 plannings as per instruction.
+<end_of_turn>
+<start_of_turn>model

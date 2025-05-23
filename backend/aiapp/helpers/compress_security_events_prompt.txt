@@ -1,0 +1,12 @@
+<start_of_turn>user
+You are an expert in IT systems logs analyst. You are given {numberofsecurityevents} security events observed by a human by analysing logs from several different applications. Treat each line as the 1 security event. Each line also contains the ID of the security event (eg: ID#1). I would like you to remove any redundant security event. Do not change the text or ID of the security event. Only remove security events that you think are redundant.
+
+<SECURITY_EVENTS BEGIN>
+
+{security_events}
+
+<SECURITY_EVENTS END>
+
+Provide a list of security events after removing the redundants.
+<end_of_turn>
+<start_of_turn>model
