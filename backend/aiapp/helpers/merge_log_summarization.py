@@ -6,7 +6,17 @@ import aiohttp
 import asyncio
 import json
 import re
+from helpers.summary_analysis_reader import read_json_objects
+from classes.GenericOutput import GenericOutput
+
+
+
 conversation_history = [{"role": "system", "content": "You are a helpful IT systems logs analyst."}]
+
+
+def estimate_tokens(line):
+    return len(line) // 4 + (1 if len(line) % 4 != 0 else 0)
+
 
 async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, modelname=None, keep_alive = "0"):
   # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
@@ -23,6 +33,7 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
 
   conversation_history.append({"role": "user", "content": prompt})
 
+  estimated_tokens = estimate_tokens(prompt)
   if keepHistory:
     # Remove the oldest messages to keep only the last 10
     if len(conversation_history) > 10:
@@ -33,13 +44,12 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
         "messages": conversation_history[-5:],  # Keep only the last 5 messages
         "format": format,
         "options": {
-          "num_ctx": 5058,
+          "num_ctx": estimated_tokens + 20,
           "temperature": 0.7,
           "top_p": 1
         },
         "stream": False,
         "keep_alive": keep_alive,
-        "format": format
       }
   
   headers = {
@@ -48,25 +58,32 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
   authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
   headers["Authorization"] = f"Bearer {authtoken}"
 
-  print(f"calling --> {url}, {model_name}")
-  async with aiohttp.ClientSession() as session:
-    async with session.post(url, json=payload, headers=headers) as response:
-      if response.status == 200:
-        data = await response.json()
-        if "message" in data and "content" in data["message"]:
-          assistant_message = data["message"]["content"].strip()
-          data["response"] = assistant_message
-          if keepHistory:
-            conversation_history.append({"role": "assistant", "content": assistant_message})
-        return data
-      else:
-        txt = await response.text()
-        raise Exception(f"Error {response.status}: {txt}")
-          
+  ai_call_count = 0
+  while ai_call_count < 3:
+    ai_call_count += 1
+    try:
+      print(f"calling --> {url}, {model_name}, {estimated_tokens}")
+      async with aiohttp.ClientSession() as session:
+        async with session.post(url, json=payload, headers=headers) as response:
+          if response.status == 200:
+            data = await response.json()
+            if "message" in data and "content" in data["message"]:
+              assistant_message = data["message"]["content"].strip()
+              data["response"] = assistant_message
+              if keepHistory:
+                conversation_history.append({"role": "assistant", "content": assistant_message})
+            return data
+          else:
+            print("*****************************")
+            txt = await response.text()
+            raise Exception(f"Error {response.status}: {txt}")
+    except Exception as e:
+      print(f"EXCEPTION: {e}")
+  return None
 
-async def compress_summaries(summariesArr):
-  summaries_as_text=""
-  idx=1
+async def compress_summaries(master_summary, summariesArr):
+  summaries_as_text=f"\nsummary 1:\n{master_summary}"
+  idx=2
   for summary in summariesArr:
     summaries_as_text += f"\nsummary {idx}:\n{summary}"
     idx+=1
@@ -79,7 +96,8 @@ async def compress_summaries(summariesArr):
                       numberofsummaries=len(summariesArr),
                       summaries=summaries_as_text,
                     )
-  data = await callAI(prompt)
+  print(f"summarizing summaries: {idx}")
+  data = await callAI(prompt, GenericOutput.model_json_schema())
   return data
 
 
@@ -95,7 +113,8 @@ async def compress_observations(observationsArr):
                       numberofobservations=len(observationsArr),
                       observations=observations_text,
                     )
-  data = await callAI(prompt)
+  print(f"summarising observations: {len(observationsArr)}")
+  data = await callAI(prompt, GenericOutput.model_json_schema())
   return data
 
 async def compress_planning(planningArr):
@@ -110,7 +129,8 @@ async def compress_planning(planningArr):
                       numberofplannings=len(planningArr),
                       plannings=planning_text,
                     )
-  data = await callAI(prompt)
+  print(f"summarising plannings: {len(planningArr)}")
+  data = await callAI(prompt, GenericOutput.model_json_schema())
   return data
 
 async def compress_security_events(securityEventsArr):
@@ -125,7 +145,8 @@ async def compress_security_events(securityEventsArr):
                       numberofsecurityevents=len(securityEventsArr),
                       security_events=security_events_text,
                     )
-  data = await callAI(prompt)
+  print(f"summarising security_events: {len(securityEventsArr)}")
+  data = await callAI(prompt, GenericOutput.model_json_schema())
   return data
 
 async def compress_hardware_failure_events(hwFailureEventsArr):
@@ -140,42 +161,82 @@ async def compress_hardware_failure_events(hwFailureEventsArr):
                       numberofhwfailures=len(hwFailureEventsArr),
                       hwfailures=hw_failure_events_text,
                     )
-  data = await callAI(prompt)
+  print(f"summarising hardware failure: {len(hwFailureEventsArr)}")
+  data = await callAI(prompt, GenericOutput.model_json_schema())
   return data
 
 
 async def compress (master_obj):
   
-  if len(master_obj["summaries"]) > 0:
-    data = await compress_summaries(master_obj["summaries"])
+  # if len(master_obj["summaries"]) > 0:
+  #   data = await compress_summaries(master_obj["summary"], master_obj["summaries"])
+  #   if data and "response" in data:
+  #     compressed_summary=None
+  #     ai_msg_content = data["response"]
+  #     try:
+  #       obj = json.loads(ai_msg_content)
+  #       compressed_summary=obj["output"]
+  #     except Exception as e:
+  #       if '"overall summary":' in ai_msg_content.lower():
+  #         match = re.search(r'"Overall Summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
+  #       elif '"merged_summary":' in ai_msg_content.lower():
+  #         match = re.search(r'"merged_summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
+  #       if match:
+  #           compressed_summary = match.group(1)
+
+  #     if compressed_summary:
+  #       # Optional: Unescape any escaped characters like \'
+  #       compressed_summary = compressed_summary.replace("\\'", "'")
+  #       master_obj["summary"] = compressed_summary
+  #       master_obj["summaries"] = []
+  #     else:
+  #         print(f"ERROR: Commpressed summary didn't work. AI RESPONSE: {ai_msg_content}")
+
+  if len(master_obj["observations"]) > 5:
+    data = await compress_observations(master_obj["observations"])
+    matches=None
     if data and "response" in data:
-      ai_msg_content = data["response"]
-      match = re.search(r'"Overall Summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
-      if match:
-          compressed_summary = match.group(1)
-          # Optional: Unescape any escaped characters like \'
-          compressed_summary = compressed_summary.replace("\\'", "'")
-          master_obj["summary"] = compressed_summary    
-      else:
-          print("No match found.")
+      observations_text = data["response"]
+      try:
+        obj = json.loads(observations_text)
+        observations_output=obj["output"]
+        matches = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', observations_output.strip(), re.DOTALL)
+      except Exception as e:
+        # Find all observation entries
+        pattern = r'"(Observation \d+)":\s*"(.+?)"(?=,|\s*$)'
+        matches = re.findall(pattern, observations_text, re.DOTALL)
+      # Combine key and value into a single string per item
+      observations = []
+      if matches:
+        for key, value in enumerate(matches, 1):
+            clean_value = value.replace("\\'", "'")
+            observations.append(f"{key}: {clean_value}")
+        print(f"summarised observations: {len(observations)}")
+        master_obj["observations"] = observations
 
-  data = await compress_observations(master_obj["observations"])
-  if data and "response" in data:
-    observations_text = data["response"]
-    # Find all observation entries
-    pattern = r'"(Observation \d+)":\s*"(.+?)"(?=,|\s*$)'
-    matches = re.findall(pattern, observations_text, re.DOTALL)
-    # Combine key and value into a single string per item
-    master_obj["observations"] = [f"{key}: {value.replace('\\\'', '\'')}" for key, value in matches]
-
-  data = await compress_planning(master_obj["planning"])
-  if data and "response" in data:
-    planning_text = data["response"]
-    # Find all observation entries
-    pattern = r'"(Observation \d+)":\s*"(.+?)"(?=,|\s*$)'
-    matches = re.findall(pattern, planning_text, re.DOTALL)
-    # Combine key and value into a single string per item
-    master_obj["planning"] = [f"{key}: {value.replace('\\\'', '\'')}" for key, value in matches]
+  if len(master_obj["planning"]) > 5:
+    matches=None
+    data = await compress_planning(master_obj["planning"])
+    if data and "response" in data:
+      planning_text = data["response"]
+      try:
+        obj = json.loads(planning_text)
+        pattern=obj["output"]
+        pattern = re.findall(r'(.*?)(?:\n\s*\n|$)', pattern.strip(), re.DOTALL)
+        matches = [obs.strip() for obs in pattern if obs.strip()]        
+      except Exception as e:
+        # Find all observation entries
+        pattern = r'"(Planning \d+)":\s*"(.+?)"(?=,|\s*$)'
+        matches = re.findall(pattern, planning_text, re.DOTALL)
+      # Combine key and value into a single string per item
+      # master_obj["planning"] = [f"{key}: {value.replace('\\\'', '\'')}" for key, value in matches]
+      if matches:
+        plannings = []
+        for key, value in enumerate(matches, 1):
+            clean_value = value.replace("\\'", "'")
+            plannings.append(f"{key}: {clean_value}")
+        print(f"summarised planning: {len(plannings)}")
+        master_obj["planning"] = plannings
       
   if "security_events" in master_obj and len(master_obj["security_events"]) > 0:
     formatted_events = [
@@ -185,14 +246,21 @@ async def compress (master_obj):
     data = await compress_security_events(formatted_events)
     if data and "response" in data:
       events_text = data["response"]
-      # Extract all ID numbers
-      id_numbers = re.findall(r'ID#(\d+)', events_text)
-      if id_numbers and len(id_numbers) > 0:
-        # Convert to integers (optional)
-        id_numbers = [int(i) for i in id_numbers]
-        # Filter events where id is in id_numbers
-        matching_events = [event for event in master_obj["security_events"] if event["id"] in id_numbers]
-        master_obj["security_events"] = matching_events
+      try:
+        obj = json.loads(events_text)
+        events_text=obj["output"]
+        # Extract all ID numbers
+        id_numbers = re.findall(r'ID#(\d+)', events_text)
+        if id_numbers and len(id_numbers) > 0:
+          # Convert to integers (optional)
+          id_numbers = [int(i) for i in id_numbers]
+          # Filter events where id is in id_numbers
+          matching_events = [event for event in master_obj["security_events"] if event["id"] in id_numbers]
+          master_obj["security_events"] = matching_events
+        else:
+          raise Exception(f"ERROR: {events_text}")
+      except Exception as e:
+        print(f"Security events could not be compresses. {e}")
 
   if "hardware_failure_events" in master_obj and len(master_obj["hardware_failure_events"]) > 0:
     formatted_events = [
@@ -202,100 +270,30 @@ async def compress (master_obj):
     data = await compress_hardware_failure_events(formatted_events)
     if data and "response" in data:
       events_text = data["response"]
-      # Extract all ID numbers
-      id_numbers = re.findall(r'ID#(\d+)', events_text)
-      if id_numbers and len(id_numbers) > 0:
-        # Convert to integers (optional)
-        id_numbers = [int(i) for i in id_numbers]
-        # Filter events where id is in id_numbers
-        matching_events = [event for event in master_obj["hardware_failure_events"] if event["id"] in id_numbers]
-        master_obj["hardware_failure_events"] = matching_events
+      try:
+        obj = json.loads(events_text)
+        events_text=obj["output"]
+        # Extract all ID numbers
+        id_numbers = re.findall(r'ID#(\d+)', events_text)
+        if id_numbers and len(id_numbers) > 0:
+          # Convert to integers (optional)
+          id_numbers = [int(i) for i in id_numbers]
+          # Filter events where id is in id_numbers
+          matching_events = [event for event in master_obj["hardware_failure_events"] if event["id"] in id_numbers]
+          master_obj["hardware_failure_events"] = matching_events
+        else:
+          raise Exception(f"ERROR: {events_text}")
+      except Exception as e:
+        print(f"HW failure events could not be compresses. {e}")
 
-async def dedupe_similar (masterArr, newArr, embedding_model):
-  
-  embedding_dim = embedding_model.get_sentence_embedding_dimension()
-
-  # Initialize the FAISS index for inner product (cosine similarity)
-  vector_db = faiss.IndexFlatIP(embedding_dim)
-  
-  for item in masterArr:
-    embedding = embedding_model.encode([item])
-    normalized_embedding = embedding / np.linalg.norm(embedding)
-    vector_db.add(normalized_embedding)  
-
-  for item in newArr:
-    isitsimilar= await is_similar(item, vector_db, embedding_model)
-    if isitsimilar == False:
-       masterArr.append(item)
-    else:
-       print(item)
-
-async def merge (master_obj, new_obj, embedding_model):
-  
-  await dedupe_similar(master_obj["observations"], new_obj["observations"], embedding_model)
-  # todo: if observation is more than 10 compress it into 5.
-  await dedupe_similar(master_obj["planning"], new_obj["planning"], embedding_model)
-  # todo: if planning is more than 10 compress it into 5.
-
-  if "summaries" not in master_obj:
-     master_obj["summaries"] = []
-
-  master_obj["summaries"].append(new_obj["summary"])
-
-  # refine the master .. this needs to be done only once in the master lifetime.
-  # but adding it here will get called everytime. 
-  # this is a inefficiency
-  # TODO: place it in a place where it is like refne master.
-  new_security_events = [
-    event for event in master_obj["security_events"]
-    if event["confidence_score"] > 0.90 and "event_type" in event and "security" in event["event_type"].lower()
-  ]
-  master_obj["security_events"] = new_security_events
-  new_hardware_events = [
-    event for event in master_obj["hardware_failure_events"]
-    if (event["confidence_score"] > 0.95 and event["confidence_score"] <= 1) or event["confidence_score"] > 95
-  ]
-  master_obj["hardware_failure_events"] = new_hardware_events
-
-  # Lets process the merge of new_obj
-  new_security_events = [
-    event for event in new_obj["security_events"]
-    if event["confidence_score"] > 0.90 and "event_type" in event and "security" in event["event_type"].lower()
-  ]
-  # Extract all reasoning texts
-  new_reasonings = [event["reasoning"] for event in new_security_events]
-  master_reasonings = [event["reasoning"] for event in master_obj["security_events"]]
-  await dedupe_similar(master_reasonings, new_reasonings, embedding_model)
-  uncommon_set = set(master_reasonings).symmetric_difference(new_reasonings)
-  uncommon = list(uncommon_set)
-  for event in new_obj["security_events"]:
-     if event["reasoning"] in uncommon:
-        master_obj["security_events"].append(event)
-  # add an extra field called "id". This will come in handy for compress.
-  for idx, event in enumerate(master_obj["security_events"], start=1):
-    event["id"] = idx
-  
-
-  new_hardware_events = [
-    event for event in new_obj["hardware_failure_events"]
-    if (event["confidence_score"] > 0.95 and event["confidence_score"] <= 1) or event["confidence_score"] > 95
-  ]
-  # Extract all reasoning texts
-  new_reasonings = [event["reasoning"] for event in new_hardware_events]
-  master_reasonings = [event["reasoning"] for event in master_obj["hardware_failure_events"]]
-  dedupe_similar(master_reasonings, new_reasonings, embedding_model)
-  uncommon_set = set(master_reasonings).symmetric_difference(new_reasonings)
-  uncommon = list(uncommon_set)
-  idx=1
-  for event in new_obj["hardware_failure_events"]:
-     if event["reasoning"] in uncommon:
-        event["id"]=idx
-        idx += 1
-        master_obj["hardware_failure_events"].append(event)
-  for idx, event in enumerate(master_obj["hardware_failure_events"], start=1):
-    event["id"] = idx
-# Function to add event if it's unique
+    
+# Function to check if the new item is unique
 async def is_similar(textItem, vector_db, embedding_model, threshold=0.85):
+
+  # I found an anomily that there were these texts added in the observations section.
+  # just hardcoding the handle of that.
+  if textItem in {"planning", "security_events", "hardware_failure_events", "requires_immediate_attention"}:
+    return True
   embedding = embedding_model.encode([textItem])
   normalized_embedding = embedding / np.linalg.norm(embedding)
   if vector_db.ntotal > 0:
@@ -306,10 +304,118 @@ async def is_similar(textItem, vector_db, embedding_model, threshold=0.85):
           # print("*****************")
           return True
 
+  # cache it 
+  # (this is so that for the nexitem test we utilise this cache; 
+  # most likely the is_similar func is going to get called from a loop;
+  # hence maintain a cache)
   vector_db.add(normalized_embedding)
   return False
+
+
+async def dedupe_similar (masterArr, newArr, embedding_model):
   
-async def main():
+  embedding_dim = embedding_model.get_sentence_embedding_dimension()
+
+  # Initialize the FAISS index for inner product (cosine similarity)
+  # this vector_db maintains what is in there already and the newitem is compared with it.
+  # vector_db is used as cache
+  vector_db = faiss.IndexFlatIP(embedding_dim)
+  
+  # load the vector_db with what is in the master.
+  for item in masterArr:
+    embedding = embedding_model.encode([item])
+    normalized_embedding = embedding / np.linalg.norm(embedding)
+    vector_db.add(normalized_embedding)  
+
+  # test the new item. and if it is not similar to what is exisitng in the master already add it.
+  # the way we test this similarity is by maintaining a vector_db cache.
+  for item in newArr:
+    isitsimilar= await is_similar(item, vector_db, embedding_model)
+    if isitsimilar == False:
+       # no similarity found. So add it in the master
+       masterArr.append(item)
+    else:
+       print(f"similarity found: {item}")
+
+
+async def merge (master_obj, new_obj, embedding_model):
+  
+  print("-----dedupe observations------")
+  await dedupe_similar(master_obj["observations"], new_obj["observations"], embedding_model)
+  # todo: if observation is more than 10 compress it into 5.
+  print("-----dedupe planning------")
+  await dedupe_similar(master_obj["planning"], new_obj["planning"], embedding_model)
+  # todo: if planning is more than 10 compress it into 5.
+
+  if "summaries" not in master_obj:
+     master_obj["summaries"] = []
+
+  master_obj["summaries"].append(new_obj["summary"])
+
+  if "init" in master_obj and master_obj["init"]:
+    new_security_events = [
+      event for event in master_obj["security_events"]
+      if event["confidence_score"] > 0.90 and "event_type" in event and "security" in event["event_type"].lower()
+    ]
+    master_obj["security_events"] = new_security_events
+    new_hardware_events = [
+      event for event in master_obj["hardware_failure_events"]
+      if (event["confidence_score"] > 0.95 and event["confidence_score"] <= 1) or event["confidence_score"] > 95
+    ]
+    master_obj["hardware_failure_events"] = new_hardware_events
+    # we only want to do this once. lets set a flag to mark it. 
+    master_obj["init"] = True
+
+
+  print("-----dedupe seurity------")
+  # Lets process the merge of new_obj
+  new_security_events = [
+    event for event in new_obj["security_events"]
+    if event["confidence_score"] > 0.90 and "event_type" in event and "security" in event["event_type"].lower()
+  ]
+  # Extract all reasoning texts into array
+  new_reasonings = [event["reasoning"] for event in new_security_events]
+  master_reasonings = [event["reasoning"] for event in master_obj["security_events"]]
+  # dedupe the arrays. the below will place things inside master_reasoning
+  await dedupe_similar(master_reasonings, new_reasonings, embedding_model)
+  # now in order to get the rest of field for a security event (eg: eventype, confidence, reccommendation etc)
+  #   we need to find the what are the new ones that were added to master in the dedupe process
+  uncommon_set = set(master_reasonings).symmetric_difference(new_reasonings)
+  uncommon = list(uncommon_set)
+  # "uncommon" holds the new ones that are just been added.
+  #   now, lets get the rest of the fileds.
+  for event in new_obj["security_events"]:
+     if event["reasoning"] in uncommon:
+        master_obj["security_events"].append(event)
+  # add an extra field called "id". This will come in handy for compress.
+  for idx, event in enumerate(master_obj["security_events"], start=1):
+    event["id"] = idx
+  
+
+  print("-----dedupe hw------")
+  # same logic (as security_events) is used to dedupe harware_failures
+  new_hardware_events = [
+    event for event in new_obj["hardware_failure_events"]
+    if (event["confidence_score"] > 0.95 and event["confidence_score"] <= 1) or event["confidence_score"] > 95
+  ]
+  # Extract all reasoning texts
+  new_reasonings = [event["reasoning"] for event in new_hardware_events]
+  master_reasonings = [event["reasoning"] for event in master_obj["hardware_failure_events"]]
+  await dedupe_similar(master_reasonings, new_reasonings, embedding_model)
+  uncommon_set = set(master_reasonings).symmetric_difference(new_reasonings)
+  uncommon = list(uncommon_set)
+  idx=1
+  for event in new_obj["hardware_failure_events"]:
+     if event["reasoning"] in uncommon:
+        event["id"]=idx
+        idx += 1
+        master_obj["hardware_failure_events"].append(event)
+  for idx, event in enumerate(master_obj["hardware_failure_events"], start=1):
+    event["id"] = idx
+
+
+  
+async def smalltest():
   # Initialize the embedding model
   embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
@@ -592,9 +698,31 @@ async def main():
   await compress(masterobj)
   print(masterobj)
 
+
+
+
+async def bigtest():
+  MAX_TOKENS=4048
+  MAX_SUMMARIES_BEFORE_COMPRESS=28
+  embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+  file_path = "/workspaces/ai-lab/backend/aiapp/summarise-in-chunk-output-sample.txt"
+  master_summary_obj={}
+  for idx, obj in enumerate(read_json_objects(file_path), start=1):
+      print(f"\n\nPROCESSING----->{idx}\n\n")
+      if len(master_summary_obj) < 1:
+        master_summary_obj = obj
+      else:
+        await merge(master_summary_obj, obj, embedding_model)
+        print(master_summary_obj)
+        if "summaries" in master_summary_obj and len(master_summary_obj["summaries"]) > MAX_SUMMARIES_BEFORE_COMPRESS:
+          all_summary_text = "\n".join(f"\"{line}\"," for line in master_summary_obj["summaries"])
+          est_summary_tokens = estimate_tokens(all_summary_text)
+          print(f"summaries token: {est_summary_tokens}")
+          if est_summary_tokens > MAX_TOKENS:
+            await compress(master_summary_obj)
 # Example usage
 if __name__ == "__main__":
-  asyncio.run(main())
+  asyncio.run(smalltest())
   
 
 

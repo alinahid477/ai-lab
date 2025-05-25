@@ -55,6 +55,7 @@ frontend/.next/*
 
 
 backend/aiapp/__pycache__
+backend/aiapp/helpers/__pycache__
 training/tmp.txt
 backend/aiapp/classes/tmp.json
 
@@ -65,3 +66,4 @@ instructlab/*
 training_results
 
 *.gguf
+

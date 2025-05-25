@@ -2,6 +2,8 @@ import json
 import utils
 import asyncio
 
+from helpers.merge_log_summarization import smalltest 
+
 async def send_message_to_ws(message):
   print(f"**sending to ws: {message}")
   try:
@@ -24,12 +26,22 @@ async def get_intended_command(response_text):
     except Exception as e:
        print(f"EXCEPTION {e}")
 
-if __name__ == "__main__":
-  test_prompt = "why do i need a K8s"
-  response = asyncio.run(get_intended_command("{}"))
-  print(response)
 
-  print("\n\n=========================================\n\n")
-  test_prompt = "can I consider openshift for this"
-  response = asyncio.run(get_intended_command("{\"command\":\"none\"}"))
-  print(response)
+
+async def testMerge():
+  await smalltest()
+
+
+if __name__ == "__main__":
+  # test_prompt = "why do i need a K8s"
+  # response = asyncio.run(get_intended_command("{}"))
+  # print(response)
+
+  # print("\n\n=========================================\n\n")
+  # test_prompt = "can I consider openshift for this"
+  # response = asyncio.run(get_intended_command("{\"command\":\"none\"}"))
+  # print(response)
+
+  asyncio.run(testMerge())
+
+
