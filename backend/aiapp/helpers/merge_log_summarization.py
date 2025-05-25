@@ -168,29 +168,29 @@ async def compress_hardware_failure_events(hwFailureEventsArr):
 
 async def compress (master_obj):
   
-  # if len(master_obj["summaries"]) > 0:
-  #   data = await compress_summaries(master_obj["summary"], master_obj["summaries"])
-  #   if data and "response" in data:
-  #     compressed_summary=None
-  #     ai_msg_content = data["response"]
-  #     try:
-  #       obj = json.loads(ai_msg_content)
-  #       compressed_summary=obj["output"]
-  #     except Exception as e:
-  #       if '"overall summary":' in ai_msg_content.lower():
-  #         match = re.search(r'"Overall Summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
-  #       elif '"merged_summary":' in ai_msg_content.lower():
-  #         match = re.search(r'"merged_summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
-  #       if match:
-  #           compressed_summary = match.group(1)
+  if len(master_obj["summaries"]) > 0:
+    data = await compress_summaries(master_obj["summary"], master_obj["summaries"])
+    if data and "response" in data:
+      compressed_summary=None
+      ai_msg_content = data["response"]
+      try:
+        obj = json.loads(ai_msg_content)
+        compressed_summary=obj["output"]
+      except Exception as e:
+        if '"overall summary":' in ai_msg_content.lower():
+          match = re.search(r'"Overall Summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
+        elif '"merged_summary":' in ai_msg_content.lower():
+          match = re.search(r'"merged_summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
+        if match:
+            compressed_summary = match.group(1)
 
-  #     if compressed_summary:
-  #       # Optional: Unescape any escaped characters like \'
-  #       compressed_summary = compressed_summary.replace("\\'", "'")
-  #       master_obj["summary"] = compressed_summary
-  #       master_obj["summaries"] = []
-  #     else:
-  #         print(f"ERROR: Commpressed summary didn't work. AI RESPONSE: {ai_msg_content}")
+      if compressed_summary:
+        # Optional: Unescape any escaped characters like \'
+        compressed_summary = compressed_summary.replace("\\'", "'")
+        master_obj["summary"] = compressed_summary
+        master_obj["summaries"] = []
+      else:
+          print(f"ERROR: Commpressed summary didn't work. AI RESPONSE: {ai_msg_content}")
 
   if len(master_obj["observations"]) > 5:
     data = await compress_observations(master_obj["observations"])
@@ -201,6 +201,7 @@ async def compress (master_obj):
         obj = json.loads(observations_text)
         observations_output=obj["output"]
         matches = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', observations_output.strip(), re.DOTALL)
+        matches = [obs.strip() for obs in matches if obs.strip()]
       except Exception as e:
         # Find all observation entries
         pattern = r'"(Observation \d+)":\s*"(.+?)"(?=,|\s*$)'
@@ -208,9 +209,18 @@ async def compress (master_obj):
       # Combine key and value into a single string per item
       observations = []
       if matches:
-        for key, value in enumerate(matches, 1):
-            clean_value = value.replace("\\'", "'")
-            observations.append(f"{key}: {clean_value}")
+        count=0
+        pattern = re.compile(r'^\s*((?:\d+)?\.)\s*(.*)$')
+        for value in matches:
+          m = pattern.match(value)
+          if m:
+            prefix, sentence = m.groups()
+          else:
+            # no bullet found → treat entire line as sentence
+            prefix, sentence = None, value.strip()
+          if sentence:
+            count +=1
+            observations.append(f"{count}: {sentence}")
         print(f"summarised observations: {len(observations)}")
         master_obj["observations"] = observations
 
@@ -222,7 +232,7 @@ async def compress (master_obj):
       try:
         obj = json.loads(planning_text)
         pattern=obj["output"]
-        pattern = re.findall(r'(.*?)(?:\n\s*\n|$)', pattern.strip(), re.DOTALL)
+        pattern = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', pattern.strip(), re.DOTALL)
         matches = [obs.strip() for obs in pattern if obs.strip()]        
       except Exception as e:
         # Find all observation entries
@@ -231,12 +241,21 @@ async def compress (master_obj):
       # Combine key and value into a single string per item
       # master_obj["planning"] = [f"{key}: {value.replace('\\\'', '\'')}" for key, value in matches]
       if matches:
-        plannings = []
-        for key, value in enumerate(matches, 1):
-            clean_value = value.replace("\\'", "'")
-            plannings.append(f"{key}: {clean_value}")
-        print(f"summarised planning: {len(plannings)}")
-        master_obj["planning"] = plannings
+        planning=[]
+        count=0
+        pattern = re.compile(r'^\s*((?:\d+)?\.)\s*(.*)$')
+        for value in matches:
+          m = pattern.match(value)
+          if m:
+            prefix, sentence = m.groups()
+          else:
+            # no bullet found → treat entire line as sentence
+            prefix, sentence = None, value.strip()
+          if sentence:
+            count +=1
+            planning.append(f"{count}: {sentence}")
+        print(f"summarised planning: {len(planning)}")
+        master_obj["planning"] = planning
       
   if "security_events" in master_obj and len(master_obj["security_events"]) > 0:
     formatted_events = [
