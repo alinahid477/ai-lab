@@ -2,84 +2,17 @@ import utils
 from classes.SentenceAnalysis import SentenceAnalysis
 from classes.LogAnalysis import LogAnalysis
 from backend.aiapp.helpers import merge_log_summarization
-import aiohttp
+
 import asyncio
 import json
 import os
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-conversation_history = [
-    {"role": "system", "content": "You are a helpful assistant."}
-]
 
-command_ai_model_name = os.getenv("COMMAND_AI_MODEL_NAME")
-chat_ai_model_name = os.getenv("CHAT_AI_MODEL_NAME")
 
-async def callAI(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
 
-  # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
-  if modelname == "noparampassed":
-    modelname=command_ai_model_name
 
-  model_name = modelname
-  url = os.getenv("COMMAND_AI_ENDPOINT")
-  payload = {
-        "model": model_name,
-        "prompt": prompt,
-        "stream": False,
-        "keep_alive": keep_alive
-    }
-  if format == "json":
-    payload["format"] = "json"
-  headers = {
-    "Content-Type": "application/json"
-  }
-  if purpose == "summarize":
-    model_name = chat_ai_model_name
-    url = os.getenv("COMMAND_AI_ENDPOINT")
-    payload["options"] = {
-      "num_ctx": 10000
-    }
-
-  if purpose != "command" and purpose != "summarize":
-    model_name = chat_ai_model_name
-    url = os.getenv("CHAT_AI_ENDPOINT")
-    conversation_history.append({"role": "user", "content": prompt})
-    if len(conversation_history) > 10:
-      # Remove the oldest messages to keep only the last 10
-      conversation_history[:] = conversation_history[-10:]
-    payload = {
-        "model": model_name,
-        "messages": conversation_history[-5:],  # Keep only the last 5 messages
-        "format": format,
-        "options": {
-          "num_ctx": 10000,
-          "temperature": 0.7,
-          "top_p": 1
-        },
-        "stream": False,
-        "keep_alive": "2m" 
-    }
-    authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
-    headers["Authorization"] = f"Bearer {authtoken}"
-
-  print(f"calling --> {url}, {model_name}")
-  async with aiohttp.ClientSession() as session:
-    async with session.post(url, json=payload, headers=headers) as response:
-      if response.status == 200:
-        data = await response.json()
-        if purpose != "command" and purpose != "summarize":
-          # Extract the assistant's reply
-          assistant_message = data["choices"][0]["message"]["content"].strip()
-          data["response"] = assistant_message
-          # Append the assistant's reply to the conversation history
-          conversation_history.append({"role": "assistant", "content": assistant_message})
-        return data
-      else:
-        text = await response.text()
-        raise Exception(f"Error {response.status}: {text}")
-          
 
 async def callAI2(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
 
@@ -133,67 +66,6 @@ async def callAI2(purpose, prompt, format = "json", modelname="noparampassed" ,k
         if purpose != "command":
           # Extract the assistant's reply
           assistant_message = data["choices"][0]["message"]["content"].strip()
-          data["response"] = assistant_message
-          # Append the assistant's reply to the conversation history
-          if purpose != "summarize":
-            conversation_history.append({"role": "assistant", "content": assistant_message})
-        return data
-      else:
-        text = await response.text()
-        raise Exception(f"Error {response.status}: {text}")
-
-async def callAI3(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
-
-  if modelname == "noparampassed":
-    modelname=command_ai_model_name
-
-  model_name = modelname
-  url = os.getenv("COMMAND_AI_ENDPOINT")
-  payload = {
-        "model": model_name,
-        "prompt": prompt,
-        "stream": False,
-        "keep_alive": keep_alive
-    }
-  if format == "json":
-    payload["format"] = "json"
-  headers = {
-    "Content-Type": "application/json"
-  }
-
-  if purpose != "command":
-    model_name = chat_ai_model_name
-    url = os.getenv("CHAT_AI_ENDPOINT")
-    if purpose == "summarize":
-      conversation_history.clear()  
-    conversation_history.append({"role": "user", "content": prompt})
-    if len(conversation_history) > 10:
-      # Remove the oldest messages to keep only the last 10
-      conversation_history[:] = conversation_history[-10:]
-    payload = {
-        "model": model_name,
-        "messages": conversation_history[-5:],  # Keep only the last 5 messages
-        "format": format,
-        "options": {
-          "num_ctx": 20000,
-          "temperature": 0.7,
-          "top_p": 1
-        },
-        "stream": False,
-        "keep_alive": "0" 
-    }
-    authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
-    headers["Authorization"] = f"Bearer {authtoken}"
-
-  print(f"calling --> {url}, {model_name}")
-  async with aiohttp.ClientSession() as session:
-    async with session.post(url, json=payload, headers=headers) as response:
-      if response.status == 200:
-        data = await response.json()
-        if purpose != "command":
-          # Extract the assistant's reply
-          # print(data)
-          assistant_message = data["message"]["content"].strip()
           data["response"] = assistant_message
           # Append the assistant's reply to the conversation history
           if purpose != "summarize":

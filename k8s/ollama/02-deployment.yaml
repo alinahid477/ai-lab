@@ -43,19 +43,19 @@ subjects:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: ollama-granite
+  name: ollama-server
   namespace: ollama
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ollama-granite
+      app: ollama-server
   strategy:
     type: Recreate
   template:
     metadata:
       labels:
-        app: ollama-granite
+        app: ollama-server
     spec:
       # RUN AS PRIVILLEGED USER; BECAUSE ollama create models was done as root. and in order to find those model
       # the image needs to run in privilleged mode.
@@ -65,9 +65,9 @@ spec:
         runAsNonRoot: false
       serviceAccountName: scc-admin
       containers:
-      - image: quay.io/rh-ee-anahid/ollama-granite:v9
+      - image: quay.io/rh-ee-anahid/ollama-server:v1
         imagePullPolicy: Always
-        name: ollama-granite
+        name: ollama-server
         ports:
         - containerPort: 11434
           protocol: TCP
@@ -102,7 +102,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: ollama-granite-svc
+  name: ollama-server-svc
   namespace: ollama
 spec:
   ports:
@@ -110,6 +110,6 @@ spec:
     protocol: TCP
     targetPort: 11434
   selector:
-    app: ollama-granite
+    app: ollama-server
   type: ClusterIP
 

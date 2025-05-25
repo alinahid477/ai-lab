@@ -27,8 +27,7 @@ COPY . .
 # Create directories needed by the application
 RUN mkdir -p /tmp/logs /aiapp/prompt_files
 
-COPY get_intended_command_prompt_template.txt /aiapp/prompt_files/get_intended_command_prompt_template.txt
-COPY summarize_prompt_template.txt /aiapp/prompt_files/summarize_prompt_template.txt
+COPY prompt-files/*.txt /aiapp/prompt_files/
 
 # Expose the port that the application runs on
 EXPOSE 8000
