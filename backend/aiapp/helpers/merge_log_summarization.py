@@ -11,7 +11,7 @@ from classes.GenericOutput import GenericOutput
 
 
 
-conversation_history = [{"role": "system", "content": "You are a helpful IT systems logs analyst."}]
+conversation_history = [{"role": "system", "content": "You are a helpful Site Reliability Engineer. You analyse application logs and provide summary"}]
 
 
 def estimate_tokens(line):
@@ -29,7 +29,7 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
   url = os.getenv("CHAT_AI_ENDPOINT")
   url = "http://host.docker.internal:11434/api/chat"
   if clearHistory:
-    conversation_history = [{"role": "system", "content": "You are a helpful IT systems logs analyst."}]
+    conversation_history = [{"role": "system", "content": "You are a helpful Site Reliability Engineer. You analyse application logs and provide summary"}]
 
   conversation_history.append({"role": "user", "content": prompt})
 

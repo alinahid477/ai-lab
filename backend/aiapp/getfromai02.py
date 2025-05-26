@@ -1,7 +1,9 @@
-import utils
 from classes.SentenceAnalysis import SentenceAnalysis
 from classes.LogAnalysis import LogAnalysis
-from backend.aiapp.helpers import merge_log_summarization
+from classes.GenericOutput import GenericOutput
+from helpers import merge_log_summarization
+from helpers import callAI
+from helpers import utils
 
 import asyncio
 import json
@@ -9,71 +11,9 @@ import os
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
+LOG_SUMMARY_MAX_TOKENS=15000
 
 
-
-
-
-async def callAI2(purpose, prompt, format = "json", modelname="noparampassed" ,keep_alive = "5m"):
-
-  # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
-  if modelname == "noparampassed":
-    modelname=command_ai_model_name
-
-  model_name = modelname
-  url = os.getenv("COMMAND_AI_ENDPOINT")
-  payload = {
-        "model": model_name,
-        "prompt": prompt,
-        "stream": False,
-        "keep_alive": keep_alive
-    }
-  if format == "json":
-    payload["format"] = "json"
-  headers = {
-    "Content-Type": "application/json"
-  }
-  # if purpose == "summarize":
-  #   model_name = chat_ai_model_name
-  #   url = os.getenv("COMMAND_AI_ENDPOINT")
-  #   payload["options"] = {
-  #     "num_ctx": 30000
-  #   }
-
-  if purpose != "command":
-    model_name = chat_ai_model_name
-    url = os.getenv("CHAT_AI_ENDPOINT")
-    if purpose == "summarize":
-      conversation_history.clear()  
-    conversation_history.append({"role": "user", "content": prompt})
-    if len(conversation_history) > 10:
-      # Remove the oldest messages to keep only the last 10
-      conversation_history[:] = conversation_history[-10:]
-    payload = {
-        "model": model_name,
-        "messages": conversation_history[-5:],  # Keep only the last 5 messages
-        "temperature": 0.7,
-        "top_p": 1 
-    }
-    authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
-    headers["Authorization"] = f"Bearer {authtoken}"
-
-  print(f"calling --> {url}, {model_name}")
-  async with aiohttp.ClientSession() as session:
-    async with session.post(url, json=payload, headers=headers) as response:
-      if response.status == 200:
-        data = await response.json()
-        if purpose != "command":
-          # Extract the assistant's reply
-          assistant_message = data["choices"][0]["message"]["content"].strip()
-          data["response"] = assistant_message
-          # Append the assistant's reply to the conversation history
-          if purpose != "summarize":
-            conversation_history.append({"role": "assistant", "content": assistant_message})
-        return data
-      else:
-        text = await response.text()
-        raise Exception(f"Error {response.status}: {text}")
 
 async def send_message_to_ws(message):
   print(f"**sending to ws: {message}")
@@ -86,31 +26,31 @@ async def get_intended_command(english_command):
   output = None
   prepared_commands = ["logs", "csvlogs", "kafkalogs", "classifylogs", "summarizelogs"]
 
-  await send_message_to_ws(f"Asking Granite to find command: \"{english_command}\"")
+  await send_message_to_ws(f"Asking trained model (Granite_7b) to find command: \"{english_command}\"")
 
   prompt_template_path = "/aiapp/prompt_files/get_intended_command_prompt_template.txt"
   with open(prompt_template_path, "r") as file:
     prompt_template = file.read()
   prompt = prompt_template.format(
               query=english_command,
-              model_schema=SentenceAnalysis.model_json_schema(),
           )
     
   try:
-    ai_response = await callAI("command", prompt, "json", command_ai_model_name , "0m")
+    ai_response = await callAI.callAIForCommand(prompt, SentenceAnalysis.model_json_schema())
     if "response" in ai_response:
       response_text = ai_response["response"]
       parsed_json = json.loads(response_text)
-      await send_message_to_ws(f"Text extracted for command: {parsed_json}")
+      await send_message_to_ws(f"command extracted: {parsed_json}")
       if parsed_json.get("command") not in prepared_commands:
         if parsed_json.get("command"):
           await send_message_to_ws(f"Invalid command: {parsed_json['command']}. Must be one of {prepared_commands}")
         else:
           await send_message_to_ws(f"Invalid command: {parsed_json}. Must be one of {prepared_commands}")
-        await send_message_to_ws(f"Asking Granite to simply answer: \"{english_command}\"")
-        ai_response = await callAI("english", english_command, "text")
+        await send_message_to_ws(f"Asking model (chat model) to simply answer: \"{english_command}\"")
+        ai_response = await callAI.callAIForCommand(english_command, GenericOutput.model_json_schema(), "chat")
         if "response" in ai_response:
           output = ai_response["response"]
+          await send_message_to_ws(f"response extracted: {output}")
       else:
         output = parsed_json
 
@@ -122,12 +62,12 @@ async def get_intended_command(english_command):
   return output
 
 
-def estimate_tokens(line):
-    return len(line) // 4 + (1 if len(line) % 4 != 0 else 0)
-
 # summarize logs from file /tmp/test3.notgit.csv
 async def summarize_logs(logs_csv_file_path):
   
+
+  print("LOGS SUMMARIZE START")
+
   # Initialize the embedding model
   embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
 
@@ -138,100 +78,61 @@ async def summarize_logs(logs_csv_file_path):
 
   df = pd.read_csv(logs_csv_file_path)
   
-  # ai_response_history = []
+  tmp = prompt_template.format(
+                    log_type="application",
+                    logs="",
+                    stress_prompt="""You are a helpful Site Reliability Engineer. You analyse application logs and provide summary""",
+                )
+
+  approx_prompt_token = utils.estimate_tokens(tmp)
+  prev_index=0
   master_summary_obj={}
-  MAX_TOKENS=15000
-  consumed_tokens=0
-  # Create a list to store the text lines
+  consumed_tokens=approx_prompt_token
   text_lines = []
   # Iterate over each row in the DataFrame
   for index, row in df.iterrows():
     action = "threw" if row['classification'] != "info" else "output"
     text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
-    if consumed_tokens < MAX_TOKENS:
+    if consumed_tokens < LOG_SUMMARY_MAX_TOKENS:
       text_lines.append(text_line)
-      consumed_tokens += estimate_tokens(text_line)
+      consumed_tokens += utils.estimate_tokens(text_line)
     else:
-      print(f"CONTEXT: {index}--->{consumed_tokens}")
-      consumed_tokens=0
+      print(f"CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
       text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
       prompt = prompt_template.format(
                       log_type="application",
                       logs=text_lines_str,
-                      # model_schema=LogAnalysis.model_json_schema(),
-                      stress_prompt="""You are a computer security intern that's really stressed out. 
-                      Use "um" and "ah" a lot.""",
-                  )
+                      stress_prompt="""You are a helpful Site Reliability Engineer. You analyse application logs and provide summary.""",
+                    )
+      consumed_tokens=approx_prompt_token
+      prev_index=index
       text_lines.clear()
-      ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
+      ai_response = await callAI.callAIForSummarization(prompt, LogAnalysis.model_json_schema())
       response_text = ai_response["response"]
       if len(master_summary_obj) < 1:
         master_summary_obj = json.load(response_text)
       else:
+        print("merging summarization chunk with master...")
         merge_log_summarization.merge(master_summary_obj, json.load(response_text), embedding_model)
       # ai_response_history.append(response_text)
       print("\n\n")
   if len(text_lines) > 0:
-    consumed_tokens=0
     text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
+    consumed_tokens = utils.estimate_tokens(text_lines_str) + approx_prompt_token
     prompt = prompt_template.format(
                     log_type="application",
                     logs=text_lines_str,
-                    model_schema=LogAnalysis.model_json_schema(),
-                    stress_prompt="""You are a computer security intern that's really stressed out. 
-                    Use "um" and "ah" a lot.""",
-                )
-    text_lines.clear()
-    ai_response = await callAI3("summarize", prompt, LogAnalysis.model_json_schema())
+                    stress_prompt="""You are a helpful Site Reliability Engineer. You analyse application logs and provide summary.""",
+                  )
+    print(f"FINAL CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
+    ai_response = await callAI.callAIForSummarization("summarize", prompt, LogAnalysis.model_json_schema())
     response_text = ai_response["response"]
+    print("merging FINAL summarization chunk with master...")
     merge_log_summarization.merge(master_summary_obj, json.load(response_text), embedding_model)
-    # ai_response_history.append(response_text)
-    print(f"CONTEXT: {index} --> {response_text}")
 
-  print("==================================================================")
-  print("==================================================================")
-  print("==================================================================")
-  print("==================================================================")
-  print (ai_response_history)
+  print("LOGS SUMMARIZE END")
 
-  return
-
-  # print(f"HERE 3")
-  # # Print the first 5 lines of text_lines
-  # for line in text_lines[:5]:
-  #     print(line)
-  text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
-  prompt = prompt_template.format(
-                  log_type="application",
-                  logs=text_lines_str,
-                  model_schema=LogAnalysis.model_json_schema(),
-                  stress_prompt="""You are a computer security intern that's really stressed out. 
-                  
-                  Use "um" and "ah" a lot.""",
-              )
-  # print(f"HERE 4.1")
-  # input_tokens = cmd_tokenizer(prompt, return_tensors="pt").to(device)
-  output = {}
-  try:
-    # generate output tokens
-    # output = cmd_model.generate(**input_tokens, 
-    #                       max_new_tokens=100)
-    # generator = generate.json(cmd_model, LogAnalysis)
-    # print(generator)
-    # output = list(generator(prompt))
-    ai_response = await callAI("summarize", prompt, "text")
-    if "response" in ai_response:
-      response_text = ai_response["response"]
-      output = json.loads(response_text)
-  except Exception as e:
-    print(e)
-  
-  # decode output tokens into text
-  # output = cmd_tokenizer.batch_decode(output)
-  # print output
-  # print(f"summary: {output}")
-
-  return output
+  return master_summary_obj
 
 
 

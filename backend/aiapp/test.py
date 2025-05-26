@@ -3,7 +3,7 @@ import utils
 import asyncio
 import re
 from helpers.merge_log_summarization import smalltest 
-
+import getfromai02
 async def send_message_to_ws(message):
   print(f"**sending to ws: {message}")
   try:
@@ -12,19 +12,10 @@ async def send_message_to_ws(message):
     print("SMWS EXCEPTION")
 
 
-async def get_intended_command(response_text):
-    try:
-        print (response_text)
-        parsed_json = json.loads(response_text)
-        prepared_commands = ["logs", "csvlogs", "kafkalogs", "classifylogs", "summarizelogs"]
-        await send_message_to_ws(f"Text extracted for command: {parsed_json}")
-        if parsed_json.get("command") not in prepared_commands:
-            await send_message_to_ws(f"HERE ANother")
-            return "NO CMD"
-        
-        return "CMD"
-    except Exception as e:
-       print(f"EXCEPTION {e}")
+async def testGetCommand():
+  # await getfromai02.get_intended_command("get log for the past 24hour")
+  await getfromai02.get_intended_command("your name is gemma. you are an AI assistant.")
+  await getfromai02.get_intended_command("what is your name?")
 
 
 
@@ -67,6 +58,6 @@ if __name__ == "__main__":
   # response = asyncio.run(get_intended_command("{\"command\":\"none\"}"))
   # print(response)
 
-  asyncio.run(testMerge())
+  asyncio.run(testGetCommand())
 
 
