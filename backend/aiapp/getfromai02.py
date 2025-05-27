@@ -110,10 +110,10 @@ async def summarize_logs(logs_csv_file_path):
       ai_response = await callAI.callAIForSummarization(prompt, LogAnalysis.model_json_schema())
       response_text = ai_response["response"]
       if len(master_summary_obj) < 1:
-        master_summary_obj = json.load(response_text)
+        master_summary_obj = json.loads(response_text)
       else:
         print("merging summarization chunk with master...")
-        merge_log_summarization.merge(master_summary_obj, json.load(response_text), embedding_model)
+        await merge_log_summarization.merge(master_summary_obj, json.loads(response_text), embedding_model)
       # ai_response_history.append(response_text)
       print("\n\n")
   if len(text_lines) > 0:
@@ -125,12 +125,15 @@ async def summarize_logs(logs_csv_file_path):
                     stress_prompt="""You are a helpful Site Reliability Engineer. You analyse application logs and provide summary.""",
                   )
     print(f"FINAL CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
-    ai_response = await callAI.callAIForSummarization("summarize", prompt, LogAnalysis.model_json_schema())
+    ai_response = await callAI.callAIForSummarization(prompt, LogAnalysis.model_json_schema())
     response_text = ai_response["response"]
     print("merging FINAL summarization chunk with master...")
-    merge_log_summarization.merge(master_summary_obj, json.load(response_text), embedding_model)
+    await merge_log_summarization.merge(master_summary_obj, json.loads(response_text), embedding_model)
 
-  print("LOGS SUMMARIZE END")
+  print("\n\n...Final Compress...")
+  merge_log_summarization.compress(master_summary_obj)
+  print("...compress end....")
+  print("\n\nLOGS SUMMARIZE END")
 
   return master_summary_obj
 

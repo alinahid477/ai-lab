@@ -1,9 +1,17 @@
 KAFKA_BROKER_ENDPOINT=logging-kafka-kafka-kafkaroute-bootstrap-kafka.apps.cluster-7msqx.dynamic.redhatworkshops.io:443
-KAFKA_BROKER_SSL_PASSWORD=xxxxxxx
-KAFKA_USE_SSL=false
-WS_ENDPOINT=ws://172.20.0.3:8765
-COMMAND_AI_ENDPOINT=http://172.20.0.5:11434/api/generate
+KAFKA_BROKER_SSL_PASSWORD=c97xOn13878b
+KAFKA_USE_SSL="false"
+WS_ENDPOINT=ws://localhost:8765
+COMMAND_AI_ENDPOINT=http://host.docker.internal:11434/api/generate
 COMMAND_AI_MODEL_NAME=ilab-trained-granite-7b
-CHAT_AI_ENDPOINT=http://172.20.0.5:11434/chat/completions
-CHAT_AI_AUTH_TOKEN=xxxxxxx
-CHAT_AI_MODEL_NAME=granite-3-1-8b-instruct-w4a16
+# CHAT_AI_ENDPOINT=https://granite-3-1-8b-instruct-w4a16-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1/chat/completions
+# CHAT_AI_ENDPOINT=https://deepseek-r1-qwen-14b-w4a16-maas-apicast-production.apps.prod.rhoai.rh-aiservices-bu.com:443/v1/chat/completions
+# CHAT_AI_ENDPOINT=https://ollama-granite.apps.cluster-cvh69.cvh69.sandbox305.opentlc.com/api/chat
+CHAT_AI_ENDPOINT=http://host.docker.internal:11434/api/chat
+# granite
+# CHAT_AI_AUTH_TOKEN=ffaf3a383cf51ca345f7b5132b2c1f8f
+#deepseek
+CHAT_AI_AUTH_TOKEN=xxxxxxxxx 
+# CHAT_AI_MODEL_NAME=granite-3-1-8b-instruct-w4a16
+# CHAT_AI_MODEL_NAME=granite-3.3-8b-instruct
+CHAT_AI_MODEL_NAME=gemma3:4b-it-qat

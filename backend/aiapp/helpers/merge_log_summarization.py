@@ -7,15 +7,13 @@ import asyncio
 import json
 import re
 from helpers.summary_analysis_reader import read_json_objects
+from helpers import utils
 from classes.GenericOutput import GenericOutput
 
 
 
+
 conversation_history = [{"role": "system", "content": "You are a helpful Site Reliability Engineer. You analyse application logs and provide summary"}]
-
-
-def estimate_tokens(line):
-    return len(line) // 4 + (1 if len(line) % 4 != 0 else 0)
 
 
 async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, modelname=None, keep_alive = "0"):
@@ -33,7 +31,7 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
 
   conversation_history.append({"role": "user", "content": prompt})
 
-  estimated_tokens = estimate_tokens(prompt)
+  estimated_tokens = utils.estimate_tokens(prompt)
   if keepHistory:
     # Remove the oldest messages to keep only the last 10
     if len(conversation_history) > 10:
@@ -168,6 +166,7 @@ async def compress_hardware_failure_events(hwFailureEventsArr):
 
 async def compress (master_obj):
   
+  print("-----compress summaries------")
   if len(master_obj["summaries"]) > 0:
     data = await compress_summaries(master_obj["summary"], master_obj["summaries"])
     if data and "response" in data:
@@ -192,6 +191,7 @@ async def compress (master_obj):
       else:
           print(f"ERROR: Commpressed summary didn't work. AI RESPONSE: {ai_msg_content}")
 
+  print("-----compress observations------")
   if len(master_obj["observations"]) > 5:
     data = await compress_observations(master_obj["observations"])
     matches=None
@@ -224,6 +224,7 @@ async def compress (master_obj):
         print(f"summarised observations: {len(observations)}")
         master_obj["observations"] = observations
 
+  print("-----compress planning------")
   if len(master_obj["planning"]) > 5:
     matches=None
     data = await compress_planning(master_obj["planning"])
@@ -257,6 +258,7 @@ async def compress (master_obj):
         print(f"summarised planning: {len(planning)}")
         master_obj["planning"] = planning
       
+  print("-----compress security_events------")
   if "security_events" in master_obj and len(master_obj["security_events"]) > 0:
     formatted_events = [
                         f"ID#{event['id']}: {event['reasoning']}"
@@ -281,6 +283,7 @@ async def compress (master_obj):
       except Exception as e:
         print(f"Security events could not be compresses. {e}")
 
+  print("-----compress hw_failure_events------")
   if "hardware_failure_events" in master_obj and len(master_obj["hardware_failure_events"]) > 0:
     formatted_events = [
                         f"ID#{event['id']}: {event['reasoning']}"
@@ -361,10 +364,10 @@ async def merge (master_obj, new_obj, embedding_model):
   
   print("-----dedupe observations------")
   await dedupe_similar(master_obj["observations"], new_obj["observations"], embedding_model)
-  # todo: if observation is more than 10 compress it into 5.
+  # todo: if observation is more than 20 compress it into 5.
   print("-----dedupe planning------")
   await dedupe_similar(master_obj["planning"], new_obj["planning"], embedding_model)
-  # todo: if planning is more than 10 compress it into 5.
+  # todo: if planning is more than 20 compress it into 5.
 
   if "summaries" not in master_obj:
      master_obj["summaries"] = []
@@ -432,6 +435,10 @@ async def merge (master_obj, new_obj, embedding_model):
   for idx, event in enumerate(master_obj["hardware_failure_events"], start=1):
     event["id"] = idx
 
+  if len(master_obj["observations"]) > 20 or len(master_obj["planning"]) > 20:
+    print("\n\n...Compress Start...")
+    compress(master_obj)
+    print("...Compress end...")
 
   
 async def smalltest():
@@ -735,7 +742,7 @@ async def bigtest():
         print(master_summary_obj)
         if "summaries" in master_summary_obj and len(master_summary_obj["summaries"]) > MAX_SUMMARIES_BEFORE_COMPRESS:
           all_summary_text = "\n".join(f"\"{line}\"," for line in master_summary_obj["summaries"])
-          est_summary_tokens = estimate_tokens(all_summary_text)
+          est_summary_tokens = utils.estimate_tokens(all_summary_text)
           print(f"summaries token: {est_summary_tokens}")
           if est_summary_tokens > MAX_TOKENS:
             await compress(master_summary_obj)
