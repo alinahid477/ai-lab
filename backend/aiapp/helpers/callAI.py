@@ -57,7 +57,7 @@ async def callAIForSummarization(prompt, format = "json", modelname=None ,keep_a
   while count < AI_API_MAX_RETRY:
     count +=1
     try:
-      print(f"calling --> {url}, {model_name}, tokens: {estimated_tokens}")
+      print(f"calling ({count})--> {url}, {model_name}, tokens: {estimated_tokens}")
       async with aiohttp.ClientSession() as session:
         async with session.post(url, json=payload, headers=headers) as response:
           if response.status == 200:

@@ -20,19 +20,19 @@ async def send_to_websocket(data):
         print(f"Error sending data to websocket: {e}")
 
 def send_to_websocket_sync(data):
-    try:
-        if isinstance(data, dict):
-            data = json.dumps(data)
+  try:
+    if isinstance(data, dict):
+        data = json.dumps(data)
 
-        wsurl = os.getenv("WS_ENDPOINT")        
-        # Create a synchronous WebSocket connection
-        ws = create_connection(wsurl)
-        print(f"utils: Sending to ws: {data}")
-        ws.send(data)
-        # print(f"Message sent: {data}")
-        # ws.close()
-    except Exception as e:
-        print(f"Error sending data to WebSocket: {e}")
+    wsurl = os.getenv("WS_ENDPOINT")        
+    # Create a synchronous WebSocket connection
+    ws = create_connection(wsurl)
+    print(f"utils: Sending to ws: {data}")
+    ws.send(data)
+    # print(f"Message sent: {data}")
+    # ws.close()
+  except Exception as e:
+    print(f"Error sending data to WebSocket: {e}")
 
 
 def display_logs (source, page, rowcount):
@@ -159,31 +159,44 @@ def listfiles():
 
 
 def cleanup():
+  
   # Set the directory and the max allowed files
-  log_dir = "/tmp/logs"
-  max_files = 15
+	log_dir = "/tmp/logs"
+	max_files = 15
+  
+	print(f"File cleanup starting....dir:{log_dir}, max_file_count: {max_files}")
+  
+	# Get a list of all files in the directory
+	files = glob.glob(os.path.join(log_dir, '*'))
 
-  # Get a list of all files in the directory
-  files = glob.glob(os.path.join(log_dir, '*'))
+	# Only proceed if the number of files exceeds the max
+	if len(files) > max_files:
+			# Sort files by modification time (oldest first)
+			files.sort(key=os.path.getmtime)
 
-  # Only proceed if the number of files exceeds the max
-  if len(files) > max_files:
-      # Sort files by modification time (oldest first)
-      files.sort(key=os.path.getmtime)
+			# Determine how many files to delete
+			files_to_delete = files[:len(files) - max_files]
+			count=0
+			for file_path in files_to_delete:
+					if(count > 16):
+							break
+					else:
+							count =+ 1
+					try:
+							os.remove(file_path)
+							print(f"Deleted: {file_path}")
+					except Exception as e:
+							print(f"Failed to delete {file_path}: {e}")
+	print(f"File cleanup ended....")
 
-      # Determine how many files to delete
-      files_to_delete = files[:len(files) - max_files]
-      count=0
-      for file_path in files_to_delete:
-          if(count > 16):
-              break
-          else:
-              count =+ 1
-          try:
-              os.remove(file_path)
-              print(f"Deleted: {file_path}")
-          except Exception as e:
-              print(f"Failed to delete {file_path}: {e}")
+
+def get_json_from_file(filename):
+  try:
+    with open(os.path.join("/tmp/logs",filename), 'r') as json_file:
+      data = json.load(json_file)
+      return data
+  except Exception as e:
+    send_to_websocket_sync(f"EXCEPTION: executing get_json_from_file({filename}): ${e}")
 
 
 if __name__ == '__main__':

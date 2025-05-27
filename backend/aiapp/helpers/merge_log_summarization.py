@@ -60,7 +60,7 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
   while ai_call_count < 3:
     ai_call_count += 1
     try:
-      print(f"calling --> {url}, {model_name}, {estimated_tokens}")
+      print(f"calling ({ai_call_count}) --> {url}, {model_name}, {estimated_tokens}")
       async with aiohttp.ClientSession() as session:
         async with session.post(url, json=payload, headers=headers) as response:
           if response.status == 200:

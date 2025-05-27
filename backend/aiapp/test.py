@@ -4,7 +4,7 @@ import asyncio
 import re 
 import getfromai02
 from helpers import merge_log_summarization
-
+import os
 
 
 async def send_message_to_ws(message):
@@ -68,7 +68,13 @@ if __name__ == "__main__":
   # response = asyncio.run(get_intended_command("{\"command\":\"none\"}"))
   # print(response)
 
-  # asyncio.run(testSummarize())
-  asyncio.run(testCompress())
+  asyncio.run(testSummarize())
+  # asyncio.run(testCompress())
+  # fullpath = '/home/user/documents/classified_log.sometime-2025-03-15.file.nogit.txt'
+  # filename = os.path.basename(fullpath)
+  # print(filename)
+  # name_without_ext = os.path.splitext(filename)[0]
+  # print(name_without_ext)
 
-
+  # data = utils.get_json_from_file("/tmp/logs/sample-summarise-response.json")
+  # print(data)

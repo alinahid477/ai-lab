@@ -3,7 +3,8 @@ from classes.LogAnalysis import LogAnalysis
 from classes.GenericOutput import GenericOutput
 from helpers import merge_log_summarization
 from helpers import callAI
-from helpers import utils
+from helpers import utils as helperutils
+import utils
 
 import asyncio
 import json
@@ -66,7 +67,14 @@ async def get_intended_command(english_command):
 async def summarize_logs(logs_csv_file_path):
   
 
-  print("LOGS SUMMARIZE START")
+  await send_message_to_ws("LOGS SUMMARIZE START")
+
+
+  givenfilename = os.path.basename(logs_csv_file_path)
+  givenfilename = os.path.splitext(givenfilename)[0]
+  givenfiledir = os.path.dirname(logs_csv_file_path)
+  summarize_file= os.path.join(givenfiledir,f"summary_of_${givenfilename}.json")
+
 
   # Initialize the embedding model
   embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -84,7 +92,7 @@ async def summarize_logs(logs_csv_file_path):
                     stress_prompt="""You are a helpful Site Reliability Engineer. You analyse application logs and provide summary""",
                 )
 
-  approx_prompt_token = utils.estimate_tokens(tmp)
+  approx_prompt_token = helperutils.estimate_tokens(tmp)
   prev_index=0
   master_summary_obj={}
   consumed_tokens=approx_prompt_token
@@ -95,9 +103,9 @@ async def summarize_logs(logs_csv_file_path):
     text_line = f"LOGID-{index} {row['timestamp']} application: {row['app_name']} in namespace: {row['namespace_name']} {action} {row['classification']}: {row['message']}"
     if consumed_tokens < LOG_SUMMARY_MAX_TOKENS:
       text_lines.append(text_line)
-      consumed_tokens += utils.estimate_tokens(text_line)
+      consumed_tokens += helperutils.estimate_tokens(text_line)
     else:
-      print(f"CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
+      await send_message_to_ws(f"CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
       text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
       prompt = prompt_template.format(
                       log_type="application",
@@ -112,28 +120,34 @@ async def summarize_logs(logs_csv_file_path):
       if len(master_summary_obj) < 1:
         master_summary_obj = json.loads(response_text)
       else:
-        print("merging summarization chunk with master...")
+        await send_message_to_ws("merging summarization chunk with master...")
         await merge_log_summarization.merge(master_summary_obj, json.loads(response_text), embedding_model)
       # ai_response_history.append(response_text)
       print("\n\n")
   if len(text_lines) > 0:
     text_lines_str="\n".join(f"\"{line}\"," for line in text_lines)
-    consumed_tokens = utils.estimate_tokens(text_lines_str) + approx_prompt_token
+    consumed_tokens = helperutils.estimate_tokens(text_lines_str) + approx_prompt_token
     prompt = prompt_template.format(
                     log_type="application",
                     logs=text_lines_str,
                     stress_prompt="""You are a helpful Site Reliability Engineer. You analyse application logs and provide summary.""",
                   )
-    print(f"FINAL CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
+    await send_message_to_ws(f"FINAL CONTEXT: {prev_index}-{index}--->tokens: {consumed_tokens}")
     ai_response = await callAI.callAIForSummarization(prompt, LogAnalysis.model_json_schema())
     response_text = ai_response["response"]
-    print("merging FINAL summarization chunk with master...")
+    await send_message_to_ws("merging FINAL summarization chunk with master...")
     await merge_log_summarization.merge(master_summary_obj, json.loads(response_text), embedding_model)
 
-  print("\n\n...Final Compress...")
+  await send_message_to_ws("\n\n...Final Compress...")
   merge_log_summarization.compress(master_summary_obj)
-  print("...compress end....")
-  print("\n\nLOGS SUMMARIZE END")
+  await send_message_to_ws("...compress end....")
+  await send_message_to_ws("\n\nLOGS SUMMARIZE END")
+
+  with open(summarize_file, 'w') as json_file:
+    json.dump(master_summary_obj, json_file, indent=4)
+
+  await send_message_to_ws(f"Summary data has been saved to file:{summarize_file}")
+  
 
   return master_summary_obj
 
