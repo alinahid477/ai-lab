@@ -75,7 +75,7 @@ spec:
               mountPath: /mnt/models/logclassifier/1
       containers:
         - name: backend-aiapp
-          image: quay.io/rh-ee-anahid/backend-aiapp:v5
+          image: quay.io/rh-ee-anahid/backend-aiapp:v6
           ports:
             - containerPort: 8000
           envFrom:
