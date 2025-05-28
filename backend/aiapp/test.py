@@ -5,7 +5,7 @@ import re
 import getfromai02
 from helpers import merge_log_summarization
 import os
-
+import server
 
 async def send_message_to_ws(message):
   print(f"**sending to ws: {message}")
@@ -21,12 +21,14 @@ async def testGetCommand():
   await getfromai02.get_intended_command("what is your name?")
 
 async def testSummarize():
-  obj = await getfromai02.summarize_logs("/tmp/logs/classified_myappocp_202505210455.nogit.csv")
-  print("\n\n")
+  # obj = await getfromai02.summarize_logs("/tmp/logs/classified_myappocp_202505210455.nogit.csv", "/tmp/logs/classified_myappocp_202505210455.nogit.json")
+  # print("\n\n")
+  # print(obj)
+  obj = await server.summarize("/tmp/logs/classified_myappocp_202505210455.nogit.csv")
   print(obj)
 
-async def testMerge():
-  await smalltest()
+# async def testMerge():
+#   await smalltest()
 
 
 async def testCompress():
@@ -68,13 +70,15 @@ if __name__ == "__main__":
   # response = asyncio.run(get_intended_command("{\"command\":\"none\"}"))
   # print(response)
 
-  asyncio.run(testSummarize())
+  # asyncio.run(testSummarize())
   # asyncio.run(testCompress())
-  # fullpath = '/home/user/documents/classified_log.sometime-2025-03-15.file.nogit.txt'
-  # filename = os.path.basename(fullpath)
-  # print(filename)
-  # name_without_ext = os.path.splitext(filename)[0]
-  # print(name_without_ext)
-
+  # logs_csv_file_path = '/home/user/documents/classified_log.sometime-2025-03-15.file.nogit.csv'
+  # givenfilename = os.path.basename(logs_csv_file_path)
+  # givenfilename = os.path.splitext(givenfilename)[0]
+  # givenfiledir = os.path.dirname(logs_csv_file_path)
+  # jsonfilename=f"summary_of_{givenfilename}.json"
+  # summarize_file= os.path.join(givenfiledir,jsonfilename)
+  # print (summarize_file)
   # data = utils.get_json_from_file("/tmp/logs/sample-summarise-response.json")
   # print(data)
+  asyncio.run(testSummarize())

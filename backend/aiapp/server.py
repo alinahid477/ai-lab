@@ -5,7 +5,7 @@ import os
 import classification
 import getfromai02
 import kafka_extractor
-
+import asyncio
 import utils
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -65,11 +65,35 @@ async def classify_csv(filepath):
 async def summarize(filepath):
     try:
         print(f" DEBUG 111 {filepath}")
-        return await getfromai02.summarize_logs(filepath)
+        givenfilename = os.path.basename(filepath)
+        givenfilename = os.path.splitext(givenfilename)[0]
+        givenfiledir = os.path.dirname(filepath)
+        jsonfilename=f"summary_of_{givenfilename}.json"
+        summarize_file= os.path.join(givenfiledir,jsonfilename)
+        asyncio.create_task(_threaded_summarize(filepath, summarize_file))
+        return {"message": {f"AI is working to generate summarization. It will be avaiable in file: {summarize_file}"}, "filename": summarize_file}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         print("Processed summarizing logs")
+
+
+async def _threaded_summarize(filepath: str, summarize_file: str):
+    # run the entire async function inside a new event‐loop in a thread
+    def blocking_entry():
+        import asyncio as _asyncio
+        loop = _asyncio.new_event_loop()
+        _asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(getfromai02.summarize_logs(filepath, summarize_file))
+        finally:
+            loop.close()
+
+    try:
+        await asyncio.to_thread(blocking_entry)
+    except Exception as e:
+        print(f"❌ Error in background threaded summarization of {filepath!r}: {e}")
+
 
 @app.get("/downloadfile")
 async def download_file(filepath: str):

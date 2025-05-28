@@ -20,12 +20,12 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
   # print(f"callAI: {purpose}, {prompt}, {format}, {keep_alive}")
   if modelname == None:
     model_name = os.getenv("CHAT_AI_MODEL_NAME")
-    model_name = "gemma3:4b-it-qat"
+    # model_name = "gemma3:4b-it-qat"
   else:
     model_name = modelname
 
   url = os.getenv("CHAT_AI_ENDPOINT")
-  url = "http://host.docker.internal:11434/api/chat"
+  # url = "http://host.docker.internal:11434/api/chat"
   if clearHistory:
     conversation_history = [{"role": "system", "content": "You are a helpful Site Reliability Engineer. You analyse application logs and provide summary"}]
 
@@ -437,7 +437,7 @@ async def merge (master_obj, new_obj, embedding_model):
 
   if len(master_obj["observations"]) > 20 or len(master_obj["planning"]) > 20:
     print("\n\n...Compress Start...")
-    compress(master_obj)
+    await compress(master_obj)
     print("...Compress end...")
 
   

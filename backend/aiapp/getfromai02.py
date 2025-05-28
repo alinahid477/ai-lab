@@ -64,17 +64,10 @@ async def get_intended_command(english_command):
 
 
 # summarize logs from file /tmp/test3.notgit.csv
-async def summarize_logs(logs_csv_file_path):
+async def summarize_logs(logs_csv_file_path, summarize_file):
   
 
   await send_message_to_ws("LOGS SUMMARIZE START")
-
-
-  givenfilename = os.path.basename(logs_csv_file_path)
-  givenfilename = os.path.splitext(givenfilename)[0]
-  givenfiledir = os.path.dirname(logs_csv_file_path)
-  summarize_file= os.path.join(givenfiledir,f"summary_of_${givenfilename}.json")
-
 
   # Initialize the embedding model
   embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
@@ -139,12 +132,12 @@ async def summarize_logs(logs_csv_file_path):
     await merge_log_summarization.merge(master_summary_obj, json.loads(response_text), embedding_model)
 
   await send_message_to_ws("\n\n...Final Compress...")
-  merge_log_summarization.compress(master_summary_obj)
+  await merge_log_summarization.compress(master_summary_obj)
   await send_message_to_ws("...compress end....")
   await send_message_to_ws("\n\nLOGS SUMMARIZE END")
 
   with open(summarize_file, 'w') as json_file:
-    json.dump(master_summary_obj, json_file, indent=4)
+    json.dump(master_summary_obj, json_file, indent=2)
 
   await send_message_to_ws(f"Summary data has been saved to file:{summarize_file}")
   

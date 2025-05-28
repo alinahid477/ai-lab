@@ -107,7 +107,13 @@ const ChatInterface: React.FC = () => {
           if(typeof data === "object" && data !== null) {
             if ("action" in data) {
               if(data.action === "summarize") {
-                setMyAppContext({...myAppContext, summarydata: data});
+                // setMyAppContext({...myAppContext, summarydata: data});
+                if ('message' in data) {
+                  sendMessage(data.message as string, "assistant");
+                } else {
+                  console.error("Property 'message' does not exist on the data object:", data);
+                  toast.error("Failed to process the response. Missing 'message' property.");
+                }
               } else {
                 setMyAppContext({...myAppContext, dataTable: data});
               }
