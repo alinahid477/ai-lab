@@ -8,10 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 # FastAPI app\ napp = FastAPI()
 
 app = FastAPI()
-
+# === CORS Middleware: restrict to specific domains via environment variable ===
+# Set ALLOWED_ORIGINS as a comma-separated list, e.g.
+#   export ALLOWED_ORIGINS="https://abc.com,https://cdf.com"
+allowed_origins = os.getenv("PROXY_ALLOWED_ORIGINS", "").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins
+    allow_origins=allowed_origins,  # Allow all origins
     allow_credentials=True,
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers

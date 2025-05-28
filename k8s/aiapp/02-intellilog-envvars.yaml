@@ -21,3 +21,4 @@ data:
   CHAT_AI_MODEL_NAME: granite-3.3-8b-instruct
   PROXY_APP_BACKEND_HTTP_URL: http://backend-aiapp.intellilogs.svc.cluster.local:8000
   PROXY_APP_BACKEND_WS_URL: ws://backend-wsserver.intellilogs.svc.cluster.local:8765
+  PROXY_ALLOWED_ORIGINS: "https://abc.com,https://cdf.com"
