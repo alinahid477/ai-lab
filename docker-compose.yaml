@@ -24,6 +24,18 @@ services:
       aiapp:
         ipv4_address: 172.20.0.3
 
+  proxy:
+    container_name: ailab-proxy-server
+    image: ailab-proxy-server
+    env_file:
+      - .env
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    networks: 
+      aiapp:
+        ipv4_address: 172.20.0.4
+
   frontend-aiapp:
     container_name: frontend-aiapp
     image: frontend-aiapp
@@ -33,16 +45,16 @@ services:
       - "3000:3000"
     networks: 
       aiapp:
-        ipv4_address: 172.20.0.4
+        ipv4_address: 172.20.0.5
 
   ollama-granite:
-    container_name: ollama-granite
-    image: ollama-granite
+    container_name: ollama-server
+    image: ollama-server
     ports:
       - "11434:11434"
     networks: 
       aiapp:
-        ipv4_address: 172.20.0.5
+        ipv4_address: 172.20.0.6
 
   
 

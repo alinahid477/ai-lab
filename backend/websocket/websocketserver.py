@@ -31,7 +31,7 @@ async def handle_client(websocket):
 # Main function to start the WebSocket server
 async def main():
     print(f"starting webserver socket....")
-    host = os.getenv("WEBSOCKET_HOST")
+    host = os.getenv("WEBSOCKET_HOST", '0.0.0.0')
     print(f"HOST: {host}")
     port = int(os.getenv("WEBSOCKET_PORT", "8765"))
     print(f"PORT: {port}")

@@ -5,6 +5,12 @@ source myenv/bin/activate
 pip install --no-cache-dir -r requirements.txt
 
 
+```
+cd backend/proxy/
+docker build -t ailab-proxy-server .
+docker tag ailab-proxy-server:latest quay.io/rh-ee-anahid/ailab-proxy-server:v6
+docker push quay.io/rh-ee-anahid/ailab-proxy-server:v6
+```
 
 ```
 cd backend/aiapp/

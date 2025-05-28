@@ -89,8 +89,10 @@ async def ws_handler(client_ws, path):
 
 def run_ws_proxy():
     async def start_ws():
-        print("Starting WS proxy on port 8765...")
-        async with websockets.serve(ws_handler, "0.0.0.0", 8765):
+        wsport=int(os.getenv("PROXY_WS_PORT", "8765"))
+        wshost=(os.getenv("PROXY_WW_HOST", "0.0.0.0"))
+        print(f"Starting WS proxy on port {wshost}:{wsport}...")
+        async with websockets.serve(ws_handler, wshost, wsport):
             await asyncio.Future()  # run forever
 
     asyncio.run(start_ws())
@@ -99,9 +101,11 @@ def run_ws_proxy():
 if __name__ == "__main__":
     # Launch WebSocket proxy in background thread
     threading.Thread(target=run_ws_proxy, daemon=True).start()
-    print("WebSocket proxy thread started.")
+    print(f"WebSocket proxy thread started...")
 
     # Launch FastAPI HTTP + WS server
     import uvicorn
-    print("Starting FastAPI HTTP proxy on port 8080...")
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    webport=int(os.getenv("PROXY_WEB_PORT", "8000"))
+    webhost=(os.getenv("PROXY_WEB_HOST", "0.0.0.0"))
+    print(f"Starting FastAPI HTTP proxy on port {webhost}:{webport}...")
+    uvicorn.run(app, host=webhost, port=webport)

@@ -7,6 +7,6 @@ COPY . /app
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 8080 8765
+EXPOSE 8080 8081
 
 CMD ["python", "-u", "proxy.py"]
