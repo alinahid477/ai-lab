@@ -87,11 +87,21 @@ export function AIInputSheet() {
 				.then((data) => {
 					if(typeof data === "object" && data !== null) {
 						if ("action" in data) {
-						  if(data.action === "summarize") {
-							setMyAppContext({...myAppContext, summarydata: data});
-						  } else {
-							setMyAppContext({...myAppContext, dataTable: data});
-						  }
+							if(data.action === "summarize") {
+								console.log("HERE");
+								// setMyAppContext({...myAppContext, summarydata: data});
+								if ('message' in data) {
+									// sendMessage(data.message as string, "assistant");
+									console.log(data)
+								} else {
+									console.error("Property 'message' does not exist on the data object:", data);
+									toast.error("Failed to process the response. Missing 'message' property.");
+								}
+							} else if(data.action === "jsonsummary") {
+								setMyAppContext({...myAppContext, summarydata: data});
+							} else {
+								setMyAppContext({...myAppContext, dataTable: data});
+							}
 						  
 						} else {
 						  throw new Error(JSON.stringify(data));
@@ -242,7 +252,8 @@ export function AIInputSheet() {
 													<SelectContent>
 															<SelectItem value="rawlog">Show raw log</SelectItem>
 															<SelectItem value="classifiedlog">Show AI classified log</SelectItem>
-															<SelectItem value="summarizelogs">Show AI summarised log</SelectItem>
+															<SelectItem value="summarizelogs">summarised log</SelectItem>
+															<SelectItem value="jsonsummary">Load JSON Summary</SelectItem>
 													</SelectContent>
 													</Select>
 													<FormDescription>Select which action you would like to perform</FormDescription>

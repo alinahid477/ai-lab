@@ -24,8 +24,8 @@ async def send_message_to_ws(message):
     utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
 
 @app.get("/jsonsummary")
-async def get_json_summary(filename):
-    return utils.get_json_from_file(filename)
+async def get_json_summary(filepath):
+    return utils.get_json_from_file(filepath)
 
 @app.get("/csvlogs")
 async def get_csv_logs(filepath, page: int, rowcount: int):

@@ -76,12 +76,17 @@ export async function processAction(AIBACKEND_SERVER:string, action: string, par
       str = `downloadfile?filepath=${paramsKeyValueObj["filepath"]}`;
       theaction="downloadfile"
     }
+  } else if(action === "jsonsummary") {
+    if (paramsKeyValueObj && "filepath" in paramsKeyValueObj) {
+      str = `jsonsummary?filepath=${paramsKeyValueObj["filepath"]}`;
+      theaction="jsonsummary"
+    }
   }
   
   if (str && str.length > 0) {
     try {
       const data = await fetchData(AIBACKEND_SERVER, str)      
-      if(data && (data.rowcount || /summarize\?/i.test(str))) {
+      if(data && (data.rowcount || /summarize\?/i.test(str) || /jsonsummary\?/i.test(str))) {
         return {...data, action: theaction}
       } else {
         return data;

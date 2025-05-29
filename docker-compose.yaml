@@ -9,6 +9,7 @@ services:
       - .env
     volumes:
       - ./models/myclassifier/1/log_classifier.onnx:/mnt/models/logclassifier/1/model.onnx
+      - ./training/samples/:/tmp/logs/
     networks: 
       aiapp:
         ipv4_address: 172.20.0.2
@@ -36,16 +37,16 @@ services:
       aiapp:
         ipv4_address: 172.20.0.4
 
-  frontend-aiapp:
-    container_name: frontend-aiapp
-    image: frontend-aiapp
-    env_file:
-      - .env
-    ports:
-      - "3000:3000"
-    networks: 
-      aiapp:
-        ipv4_address: 172.20.0.5
+  # frontend-aiapp:
+  #   container_name: frontend-aiapp
+  #   image: frontend-aiapp
+  #   env_file:
+  #     - .env
+  #   ports:
+  #     - "3000:3000"
+  #   networks: 
+  #     aiapp:
+  #       ipv4_address: 172.20.0.5
 
   ollama-granite:
     container_name: ollama-server

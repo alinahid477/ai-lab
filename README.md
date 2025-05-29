@@ -15,8 +15,8 @@ docker push quay.io/rh-ee-anahid/ailab-proxy-server:v6
 ```
 cd backend/aiapp/
 docker build -t backend-aiapp .
-docker tag backend-aiapp:latest quay.io/rh-ee-anahid/backend-aiapp:v6
-docker push quay.io/rh-ee-anahid/backend-aiapp:v6
+docker tag backend-aiapp:latest quay.io/rh-ee-anahid/backend-aiapp:v7
+docker push quay.io/rh-ee-anahid/backend-aiapp:v7
 
 cd ../../
 docker run --rm -it  --name backend-aiapp   --env-file ${PWD}/backend/aiapp/.env   -v ${pwd}/models/myclassifier/1/log_classifier.onnx:/mnt/models/logclassifier/1/model.onnx  -v ${PWD}/training/samples:/tmp/logs  -p 8000:8000   backend-aiapp

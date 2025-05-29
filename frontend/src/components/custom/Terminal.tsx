@@ -114,7 +114,7 @@ const getPrompt = (line: React.ReactNode, index: number): React.ReactNode => {
         </div>
         );
     }
-    return <pre key={index} className="flex" style={{ userSelect: 'text' }}><code>{line}</code></pre>;
+    return <pre key={index} className="flex whitespace-pre-wrap break-words" style={{ userSelect: 'text' }}><code>{line}</code></pre>;
 };
 
 const formatTimestamp = (timestamp: number): string => {
