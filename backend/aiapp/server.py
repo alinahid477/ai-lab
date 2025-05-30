@@ -8,7 +8,7 @@ import kafka_extractor
 import asyncio
 import utils
 from fastapi.middleware.cors import CORSMiddleware
-
+import math
 app = FastAPI()
 
 app.add_middleware(
@@ -22,6 +22,20 @@ app.add_middleware(
 
 async def send_message_to_ws(message):
     utils.send_to_websocket_sync({"type": "terminalinfo", "data": message})
+
+
+def sanitize_for_fastapi(obj):
+    if isinstance(obj, float) and not math.isfinite(obj):
+        return None
+    if isinstance(obj, dict):
+        return {k: sanitize_for_fastapi(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_for_fastapi(v) for v in obj]
+    return obj
+
+@app.get("/healthz")
+async def healthz():
+    return {"running": "ok"}
 
 @app.get("/jsonsummary")
 async def get_json_summary(filepath):
@@ -38,7 +52,8 @@ async def get_csv_logs(filepath, page: int, rowcount: int):
         utils.send_to_websocket_sync({"type": "terminalinfo", "data": f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}."})
         # send_message_to_ws(f"Requested for data from rows {page*rowcount}-{page*rowcount+rowcount} of file:{filepath}.")
         data = utils.display_logs(filepath, page, rowcount)
-        return data
+        sanitized_data = sanitize_for_fastapi(data)
+        return sanitized_data
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -140,3 +155,13 @@ async def truncate_csv(filepath, totalrows, skiprows=0):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         send_message_to_ws(f"Processed truncating csv {filepath} to {totalrows} rows")
+
+
+# === Entry point ===
+if __name__ == "__main__":
+    # Launch FastAPI HTTP + WS server
+    import uvicorn
+    webport=int(os.getenv("BACKEND_SERVER_PORT", "8000"))
+    webhost=(os.getenv("BACKEND_SERVER_HOST", "0.0.0.0"))
+    print(f"Starting uvicorn on port {webhost}:{webport}...")
+    uvicorn.run(app, host=webhost, port=webport)

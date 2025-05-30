@@ -49,10 +49,23 @@ import jsondata from "@/lib/summarize.json" assert { type: "json" };
 
 
 const formSchema = z.object({
-		ddlLogDuration: z.string(),
+		ddlLogDuration: z.string().optional(),
 		ddlAction: z.string(),
-		filepath: z.string().nullable().optional(),
-});
+		filepath: z.string().optional().nullable(),
+}).refine(
+	(data) => {
+		// both undefined/null/""
+		const hasDuration = !!data.ddlLogDuration?.trim();
+		const hasFilepath = !!data.filepath?.trim();
+		return hasDuration || hasFilepath;
+	},
+	{
+		// message & where to show it
+		message: "You must provide either a log duration or a file path.",
+		path: ["filepath"], 
+		// you can choose ["filepath"] or both, depending on UX
+	}
+);
 
 const formFreeHandSchema = z.object({
 	filepath: z.string(),
@@ -251,7 +264,7 @@ export function AIInputSheet() {
 													</FormControl>
 													<SelectContent>
 															<SelectItem value="rawlog">Show raw log</SelectItem>
-															<SelectItem value="classifiedlog">Show AI classified log</SelectItem>
+															<SelectItem value="csvlogs">Display CSV logs</SelectItem>
 															<SelectItem value="summarizelogs">summarised log</SelectItem>
 															<SelectItem value="jsonsummary">Load JSON Summary</SelectItem>
 													</SelectContent>

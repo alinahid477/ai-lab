@@ -1,4 +1,5 @@
 from flask import Flask, request, Response
+from flask_cors import CORS
 import requests
 import asyncio
 import websockets
@@ -7,7 +8,8 @@ from urllib.parse import urlencode
 import os
 app = Flask(__name__)
 
-
+allowed_origins = os.getenv("PROXY_ALLOWED_ORIGINS", "").split(",")
+CORS(app, origins=allowed_origins)
 # Optional health check route
 @app.route("/")
 def healthz():

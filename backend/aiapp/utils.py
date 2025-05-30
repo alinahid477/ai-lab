@@ -13,7 +13,7 @@ async def send_to_websocket(data):
             data = json.dumps(data)
         wsurl=os.getenv("WS_ENDPOINT")
         # print(f"{wsurl}--->{data}")
-        async with websockets.connect(wsurl) as websocket:
+        async with websockets.connect(wsurl, open_timeout=5) as websocket:
             await websocket.send(data)
             # print(f"message: {data} SENT TO: {wsurl}")
     except Exception as e:
@@ -26,7 +26,7 @@ def send_to_websocket_sync(data):
 
     wsurl = os.getenv("WS_ENDPOINT")        
     # Create a synchronous WebSocket connection
-    ws = create_connection(wsurl)
+    ws = create_connection(wsurl, timeout=5)
     print(f"utils: Sending to ws: {data}")
     ws.send(data)
     # print(f"Message sent: {data}")
@@ -62,11 +62,14 @@ def display_logs_from_csv(filepath, page, rowcount):
             dfittr = df.iterrows()
         else:
             skip = page*rowcount
+            if skip == 0:
+                 skip = 1 # skip the header row
             if "classification" in df.columns:
                 df = pd.read_csv(filepath, skiprows=skip, names=["timestamp", "namespace_name","app_name","level","log_type","message", "classification"])
             else:
                 df = pd.read_csv(filepath, skiprows=skip, names=["timestamp", "namespace_name","app_name","level","log_type","message"])
-            dfittr = df.head(rowcount).iterrows()
+            df2 = df.head(rowcount).reset_index(drop=True)
+            dfittr = df2.iterrows()
         jsonData = get_json(dfittr, filepath, page, rowcount)
         jsonData['totalrow'] = totalrow
         return jsonData

@@ -1,18 +1,19 @@
 
 services:
-  backend-aiapp:
-    container_name: backend-aiapp
-    image: backend-aiapp
-    ports:
-      - "8000:8000"
-    env_file:
-      - .env
-    volumes:
-      - ./models/myclassifier/1/log_classifier.onnx:/mnt/models/logclassifier/1/model.onnx
-      - ./training/samples/:/tmp/logs/
-    networks: 
-      aiapp:
-        ipv4_address: 172.20.0.2
+  # backend-aiapp:
+  #   container_name: backend-aiapp
+  #   image: backend-aiapp
+  #   ports:
+  #     - "8000:8000"
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./models/myclassifier/1/log_classifier.onnx:/mnt/models/logclassifier/1/model.onnx
+  #     - ./training/samples/:/tmp/logs/
+  #   network_mode: "host"
+    # networks: 
+    #   aiapp:
+    #     ipv4_address: 172.20.0.2
 
   backend-wsserver:
     container_name: backend-wsserver
@@ -21,10 +22,11 @@ services:
       - .env
     ports:
       - "8765:8765"
-    networks: 
-      aiapp:
-        ipv4_address: 172.20.0.3
-
+    network_mode: "host"
+    # networks: 
+    #   aiapp:
+    #     ipv4_address: 172.20.0.3
+  
   proxy:
     container_name: ailab-proxy-server
     image: ailab-proxy-server
@@ -33,9 +35,10 @@ services:
     ports:
       - "8080:8080"
       - "8081:8081"
-    networks: 
-      aiapp:
-        ipv4_address: 172.20.0.4
+    network_mode: "host"
+    # networks: 
+    #   aiapp:
+    #     ipv4_address: 172.20.0.4
 
   # frontend-aiapp:
   #   container_name: frontend-aiapp
@@ -53,15 +56,16 @@ services:
     image: ollama-server
     ports:
       - "11434:11434"
-    networks: 
-      aiapp:
-        ipv4_address: 172.20.0.6
+    network_mode: "host"
+    # networks: 
+    #   aiapp:
+    #     ipv4_address: 172.20.0.6
 
   
 
-networks:
-  aiapp:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.20.0.0/16
+# networks:
+#   aiapp:
+#     driver: bridge
+#     ipam:
+#       config:
+#         - subnet: 172.20.0.0/16

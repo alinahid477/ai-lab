@@ -27,6 +27,10 @@ async def testSummarize():
   obj = await server.summarize("/tmp/logs/classified_myappocp_202505210455.nogit.csv")
   print(obj)
 
+async def testCSVLogs():
+  obj = await server.get_csv_logs("/tmp/logs/application_logs.nogit.csv", 0, 100)
+  print(obj)
+
 # async def testMerge():
 #   await smalltest()
 
@@ -81,4 +85,4 @@ if __name__ == "__main__":
   # print (summarize_file)
   # data = utils.get_json_from_file("/tmp/logs/sample-summarise-response.json")
   # print(data)
-  asyncio.run(testSummarize())
+  asyncio.run(testCSVLogs())
