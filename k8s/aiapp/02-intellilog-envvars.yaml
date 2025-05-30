@@ -5,6 +5,7 @@ metadata:
   namespace: intellilogs
 data:
   # backend-wsserver
+  WEBSOCKET_HOST: '0.0.0.0'
   WEBSOCKET_PORT: '8765'
   # frontend-aiapp
   AIBACKEND_SERVER: http://backend-aiapp.intellilogs.svc.cluster.local:8000

@@ -18,7 +18,7 @@ spec:
         - name: myquaycred
       containers:
       - name: proxy-app
-        image: quay.io/rh-ee-anahid/proxy-app:v2
+        image: quay.io/rh-ee-anahid/ailab-proxy-server:v7
         ports:
         - containerPort: 8080
         - containerPort: 8765
