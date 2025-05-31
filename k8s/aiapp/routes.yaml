@@ -1,0 +1,59 @@
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: intellilogs-proxy-route-80
+  namespace: intellilogs
+spec:
+  host: intellilogs-web-proxy.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com
+  path: /
+  to:
+    kind: Service
+    name: proxy-app
+    weight: 100
+  port:
+    targetPort: httpproxy
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  wildcardPolicy: None
+
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: intellilogs-proxy-route-8765
+  namespace: intellilogs
+spec:
+  host: intellilogs-ws-proxy.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com
+  path: /
+  to:
+    kind: Service
+    name: proxy-app
+    weight: 100
+  port:
+    targetPort: httpproxy
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  wildcardPolicy: None
+
+---
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: intellilogs-ui
+  namespace: intellilogs
+spec:
+  host: intellilogs-ui.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com
+  path: /
+  to:
+    kind: Service
+    name: frontend-aiapp
+    weight: 100
+  port:
+    targetPort: 3000
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  wildcardPolicy: None

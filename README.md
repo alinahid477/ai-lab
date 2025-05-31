@@ -8,15 +8,15 @@ pip install --no-cache-dir -r requirements.txt
 ```
 cd backend/proxy/
 docker build -t ailab-proxy-server .
-docker tag ailab-proxy-server:latest quay.io/rh-ee-anahid/ailab-proxy-server:v7
-docker push quay.io/rh-ee-anahid/ailab-proxy-server:v7
+docker tag ailab-proxy-server:latest quay.io/rh-ee-anahid/ailab-proxy-server:v13
+docker push quay.io/rh-ee-anahid/ailab-proxy-server:v13
 ```
 
 ```
 cd backend/aiapp/
 docker build -t backend-aiapp .
-docker tag backend-aiapp:latest quay.io/rh-ee-anahid/backend-aiapp:v7
-docker push quay.io/rh-ee-anahid/backend-aiapp:v7
+docker tag backend-aiapp:latest quay.io/rh-ee-anahid/backend-aiapp:v14
+docker push quay.io/rh-ee-anahid/backend-aiapp:v14
 
 cd ../../
 docker run --rm -it  --name backend-aiapp   --env-file ${PWD}/backend/aiapp/.env   -v ${pwd}/models/myclassifier/1/log_classifier.onnx:/mnt/models/logclassifier/1/model.onnx  -v ${PWD}/training/samples:/tmp/logs  -p 8000:8000   backend-aiapp
@@ -36,8 +36,8 @@ docker run --rm -it  --name backend-wsserver -p 8765:8765   backend-wsserver
 ```
 cd frontend
 docker build -t frontend-aiapp .
-docker tag frontend-aiapp:latest quay.io/rh-ee-anahid/frontend-aiapp:v7
-docker push quay.io/rh-ee-anahid/frontend-aiapp:v7
+docker tag frontend-aiapp:latest quay.io/rh-ee-anahid/frontend-aiapp:v9
+docker push quay.io/rh-ee-anahid/frontend-aiapp:v9
 cd ../../
 docker run --rm -it --name frontend-aiapp --env-file $(pwd)/.env -p 3000:3000  frontend-aiapp
 ```

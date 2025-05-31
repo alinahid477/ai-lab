@@ -8,23 +8,25 @@ data:
   WEBSOCKET_HOST: '0.0.0.0'
   WEBSOCKET_PORT: '8765'
   # frontend-aiapp
-  AIBACKEND_SERVER: http://backend-aiapp.intellilogs.svc.cluster.local:8000
-  WSSERVER: ws://backend-wsserver.intellilogs.svc.cluster.local:8765
+  AIBACKEND_SERVER: https://intellilogs-web-proxy.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com
+  WSSERVER: ws://intellilogs-ws-proxy.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com
   # backend-aiapp
   KAFKA_BROKER_ENDPOINT: logging-kafka-kafka-bootstrap.kafka.svc:9092
   KAFKA_BROKER_SSL_PASSWORD: none
   KAFKA_USE_SSL: "false"
+  LOG_SUMMARY_MAX_TOKENS: "15000"
   WS_ENDPOINT: ws://backend-wsserver.intellilogs.svc.cluster.local:8765
-  COMMAND_AI_ENDPOINT: http://ollama-granite-svc.ollama.svc.cluster.local:11434/api/generate
+  COMMAND_AI_ENDPOINT: http://ollama-server-svc.ollama.svc.cluster.local:11434/api/generate
   COMMAND_AI_MODEL_NAME: ilab-trained-granite-7b
-  CHAT_AI_ENDPOINT: http://ollama-granite-svc.ollama.svc.cluster.local:11434/v1/chat/completions
+  CHAT_AI_ENDPOINT: http://ollama-server-svc.ollama.svc.cluster.local:11434/api/chat
   CHAT_AI_AUTH_TOKEN: notneededhere
   CHAT_AI_MODEL_NAME: gemma3:4b-it-qat
   # proxyapp
   PROXY_APP_BACKEND_HTTP_URL: http://backend-aiapp.intellilogs.svc.cluster.local:8000
   PROXY_APP_BACKEND_WS_URL: ws://backend-wsserver.intellilogs.svc.cluster.local:8765
-  PROXY_ALLOWED_ORIGINS: "https://abc.com,https://cdf.com"
+  PROXY_ALLOWED_ORIGINS: "https://intellilogs-ui.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com,https://cdf.com"
   PROXY_WEB_HOST: '0.0.0.0'
   PROXY_WEB_PORT: '8000'
   PROXY_WS_HOST: '0.0.0.0'
   PROXY_WS_PORT: '8765'
+  PROXY_TURN_OFF_CORS: 'False'

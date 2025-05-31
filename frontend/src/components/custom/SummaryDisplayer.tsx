@@ -21,7 +21,7 @@ type SummaryData = {
   observations: string[];
   planning: string[];
   security_events: SecurityEvent[];
-  Hardware_failure_events: HardwareFailureEvent[];
+  hardware_failure_events: HardwareFailureEvent[];
   requires_immediate_attention: boolean;
 };
 
@@ -95,7 +95,7 @@ export function SummaryDisplayer({ data }: { data: SummaryData }) {
         <AccordionItem value="hardware_failure">
           <AccordionTrigger>Hardware Failure Events</AccordionTrigger>
           <AccordionContent>
-            {data.Hardware_failure_events.map((event, idx) => (
+            {data.hardware_failure_events.map((event, idx) => (
               <Card key={idx} className="mb-3">
                 <CardContent className="p-4 space-y-2">
                   <p><strong>Type:</strong> {event.event_type}</p>

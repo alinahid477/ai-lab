@@ -4,7 +4,7 @@ metadata:
   name: logging-kafka-console
   namespace: kafka
 spec:
-  hostname: logging-kafka-console.apps.cluster-7msqx.dynamic.redhatworkshops.io
+  hostname: logging-kafka-console.apps.cluster-xz4ts.xz4ts.sandbox2288.opentlc.com
   kafkaClusters:
     - name: logging-kafka
       namespace: kafka

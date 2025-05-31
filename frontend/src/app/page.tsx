@@ -9,6 +9,7 @@ import { DataTable } from "@/components/custom/LogsTable/data-table";
 import { SummaryDisplayer } from "@/components/custom/SummaryDisplayer";
 import { AIInputSheet } from "@/components/custom/AIInputSheet";
 import ChatInterface from "@/components/custom/ChatInterface";
+import AnimatedAILogo from "@/components/custom/AnimatedAILogo";
 
 export default function Home() {
 
@@ -77,14 +78,25 @@ export default function Home() {
 
   return (
     <div className="grid grid-rows-[5px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:pl-20 sm:pr-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center w-full sm:items-start">
+      {/*<div className="row-start-1 self-start justify-self-start flex items-center gap-4">*/}
+      <div className="row-start-1 self-start justify-self-start flex flex-col items-start gap-2 mb-8">
+      <AnimatedAILogo/>
+        <Image
+          src="/intellilogs.png"
+          alt="IntelliLogs logo"
+          width={120}
+          height={40}
+          priority
+        />
+      </div>
+      <main className="flex flex-col gap-[32px] row-start-2 items-center w-full sm:items-start pt-8">
         
         {showPage ? 
           <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           
           
           <li className="mb-2 tracking-[-.01em]">
-            This will be prompt display between human and this AI
+            Display: Human - AI interface
             <div className="grid grid-cols-8 gap-4 w-full min-w-[200px] shadow-md">
               <div className="col-span-1">
                 <Image
@@ -103,14 +115,14 @@ export default function Home() {
             <br/>
           </li>
           <li className="tracking-[-.01em]">
-            This is a terminal like interface to send commad to the backend AI machine. The AI will pick it from there...
+            User Input: Terminal to the AI
             <div className="grid w-full min-w-[200px] min-h-[400px]">
               <Terminal commands={[]} username="human" machinename="aimachine" socketMessage={wsMessage || {}}/>  
             </div>
             <br/><br/>
           </li>
           <li className="tracking-[-.01em]">
-            This is where output will show up for displaying information
+            Display output: Tabular or Formatted data displayer
             {myAppContext.dataTable && myAppContext.dataTable.data && myAppContext.dataTable.data.length > 1 && (
               <div className="max-h-[500px] min-w-[300px] overflow-auto border border-gray-300 p-4 rounded shadow">
                 {/* Render tableData content here */}
@@ -138,9 +150,9 @@ export default function Home() {
           </li>
 
           <li className="pt-8">
-             Alternatively, click &nbsp; 
+             Traditional UI: &nbsp; 
             <AIInputSheet />
-            &nbsp; for form
+            &nbsp;
           </li>
 
         </ol>

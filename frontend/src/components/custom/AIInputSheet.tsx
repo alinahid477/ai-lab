@@ -91,7 +91,7 @@ export function AIInputSheet() {
 
 	function onSubmit(values: z.infer < typeof formSchema > ) {
 		try {
-			const logDuration = parseInt(values.ddlLogDuration, 10);
+			const logDuration = parseInt(values.ddlLogDuration ?? "0", 10);
 			const action = values.ddlAction; 
 			const filepath = values.filepath; 
 			setIsSheetOpen(false);
@@ -362,7 +362,8 @@ export function AIInputSheet() {
 					)}
 				</div>
 				<SheetFooter>
-					<Button className="w-20" onClick={() => setMyAppContext({...myAppContext, summarydata: jsondata})}>sample</Button>
+					{/* <Button className="w-20" onClick={() => setMyAppContext({...myAppContext, summarydata: jsondata})}>sample</Button> */}
+					
 				</SheetFooter>
 			</SheetContent>
 				

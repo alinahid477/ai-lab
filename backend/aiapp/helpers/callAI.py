@@ -37,14 +37,17 @@ async def callAIForSummarization(prompt, format = "json", modelname=None ,keep_a
   conversation_history = [{"role": "system", "content": "You are a helpful assistant."}]
   conversation_history.append({"role": "user", "content": prompt})
 
-  estimated_tokens = utils.estimate_tokens(prompt)
+  estimated_tokens = utils.estimate_tokens(conversation_history)
 
   payload = {
         "model": model_name,
         "messages": conversation_history[-5:],  # Keep only the last 5 messages
         "format": format,
         "options": {
-          "num_ctx": estimated_tokens + 30,
+          # always observed this: time=2025-05-31T02:43:23.996Z level=WARN source=runner.go:150 msg="truncating input prompt" limit=20500 prompt=35358 keep=4 new=20500
+          # where the gap is 35358-20500 = 14858
+          # hence the + 15000
+          "num_ctx": estimated_tokens + 15000, 
           "temperature": 0.7,
           "top_p": 1
         },
@@ -56,6 +59,7 @@ async def callAIForSummarization(prompt, format = "json", modelname=None ,keep_a
   count=0
   while count < AI_API_MAX_RETRY:
     count +=1
+    data=None
     try:
       print(f"calling ({count})--> {url}, {model_name}, tokens: {estimated_tokens}")
       async with aiohttp.ClientSession() as session:
@@ -71,7 +75,7 @@ async def callAIForSummarization(prompt, format = "json", modelname=None ,keep_a
             text = await response.text()
             raise Exception(f"Error {response.status}: {text}")
     except Exception as e:
-      print(f"ERROR making AI API call: {e}")
+      print(f"ERROR making AI API call: {e} for\n---payload---\n{payload}\n=========\n---Reponse Data:---\n{data}")
       time.sleep(60)
 
 
@@ -111,7 +115,7 @@ async def callAIForCommand(prompt, format = "json", modelname=None ,keep_alive =
           "messages": conversation_history[-5:],  # Keep only the last 5 messages
           # "format": format,
           "options": {
-            "num_ctx": estimated_tokens + 500,
+            "num_ctx": estimated_tokens + 100,
             "temperature": 0.7,
             "top_p": 1
           },
@@ -143,13 +147,25 @@ async def callAIForCommand(prompt, format = "json", modelname=None ,keep_alive =
             elif "response" in data:
               # Extract the assistant's reply
               assistant_message=data["response"].strip()
+            elif "choices" in data:
+              # Extract the assistant's reply
+              if len(data["choices"]) > 0:
+                if "message" in data["choices"][0]:
+                  if "content" in data["choices"][0]["message"]:
+                    assistant_message=data["choices"][0]["message"]["content"].strip()
+                  else:
+                    raise Exception(f"No content in data->choices->[0]->message: {data}")
+                else:
+                  raise Exception(f"No message in data->choices->[0]: {data}")
+              else:
+                  raise Exception(f"No len for data->choices: {data}")
             if assistant_message:
               data["response"] = assistant_message
               # Append the assistant's reply to the conversation history
               conversation_history.append({"role": "assistant", "content": assistant_message})
               return data
             else:
-              raise Exception(f"No reponse or message in data: {data}")  
+              raise Exception(f"No reponse or message or choices in data: {data}")  
           else:
             text = await response.text()
             raise Exception(f"Error {response.status}: {text}")

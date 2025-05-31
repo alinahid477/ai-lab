@@ -136,3 +136,17 @@ body {
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+
+@keyframes scroll-fast {
+  0% {
+    transform: translateY(20px);
+  }
+  100% {
+    transform: translateY(-60px);
+  }
+}
+
+.animate-scroll-fast {
+  animation: scroll-fast 1.5s linear infinite;
+}

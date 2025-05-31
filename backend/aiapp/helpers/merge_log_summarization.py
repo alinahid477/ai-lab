@@ -2,6 +2,7 @@ import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 import os
+import time
 import aiohttp
 import asyncio
 import json
@@ -56,9 +57,11 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
   authtoken=os.getenv("CHAT_AI_AUTH_TOKEN")
   headers["Authorization"] = f"Bearer {authtoken}"
 
+  sleeponerror=60 # give ollama time to recover. this is added logic based on observation.
   ai_call_count = 0
   while ai_call_count < 3:
     ai_call_count += 1
+    sleeponerror=60
     try:
       print(f"calling ({ai_call_count}) --> {url}, {model_name}, {estimated_tokens}")
       async with aiohttp.ClientSession() as session:
@@ -74,9 +77,15 @@ async def callAI(prompt, format = "json", keepHistory=False, clearHistory=True, 
           else:
             print("*****************************")
             txt = await response.text()
+            try:
+              if "llama runner process has terminated" in txt:
+                sleeponerror = sleeponerror * 2
+            except Exception as eeee:
+              print("")
             raise Exception(f"Error {response.status}: {txt}")
     except Exception as e:
-      print(f"EXCEPTION: {e}")
+      print(f"EXCEPTION: {e}. SLEEP: {sleeponerror}\n\n")
+      time.sleep(sleeponerror)
   return None
 
 async def compress_summaries(master_summary, summariesArr):
@@ -166,147 +175,174 @@ async def compress_hardware_failure_events(hwFailureEventsArr):
 
 async def compress (master_obj):
   
-  print("-----compress summaries------")
-  if len(master_obj["summaries"]) > 0:
-    data = await compress_summaries(master_obj["summary"], master_obj["summaries"])
-    if data and "response" in data:
-      compressed_summary=None
-      ai_msg_content = data["response"]
-      try:
-        obj = json.loads(ai_msg_content)
-        compressed_summary=obj["output"]
-      except Exception as e:
-        if '"overall summary":' in ai_msg_content.lower():
-          match = re.search(r'"Overall Summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
-        elif '"merged_summary":' in ai_msg_content.lower():
-          match = re.search(r'"merged_summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
-        if match:
-            compressed_summary = match.group(1)
+  try:
+    print("-----compress summaries------")
+    if len(master_obj["summaries"]) > 0:
+      data = await compress_summaries(master_obj["summary"], master_obj["summaries"])
+      if data and "response" in data:
+        compressed_summary=None
+        ai_msg_content = data["response"]
+        try:
+          obj = json.loads(ai_msg_content)
+          compressed_summary=obj["output"]
+        except Exception as e:
+          print(f"❌ DEBUG: {e}\n{ai_msg_content}")
+          match = None
+          if '"overall summary":' in ai_msg_content.lower():
+            match = re.search(r'"Overall Summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
+          elif '"merged_summary":' in ai_msg_content.lower():
+            match = re.search(r'"merged_summary":\s*"(.+?)",\s*"\w', ai_msg_content, re.DOTALL)
+          if match:
+              compressed_summary = match.group(1)
 
-      if compressed_summary:
-        # Optional: Unescape any escaped characters like \'
-        compressed_summary = compressed_summary.replace("\\'", "'")
-        master_obj["summary"] = compressed_summary
-        master_obj["summaries"] = []
+        if compressed_summary:
+          # Optional: Unescape any escaped characters like \'
+          compressed_summary = compressed_summary.replace("\\'", "'")
+          master_obj["summary"] = compressed_summary
+          master_obj["summaries"] = []
+        else:
+            print(f"ERROR: Commpressed summary didn't work. AI RESPONSE: {ai_msg_content}")
       else:
-          print(f"ERROR: Commpressed summary didn't work. AI RESPONSE: {ai_msg_content}")
+        raise Exception(f"Summary data is NULL. {data}")
+  except Exception as e:
+    print(f"❌ DEBUG: {e}")
 
-  print("-----compress observations------")
-  if len(master_obj["observations"]) > 5:
-    data = await compress_observations(master_obj["observations"])
-    matches=None
-    if data and "response" in data:
-      observations_text = data["response"]
-      try:
-        obj = json.loads(observations_text)
-        observations_output=obj["output"]
-        matches = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', observations_output.strip(), re.DOTALL)
-        matches = [obs.strip() for obs in matches if obs.strip()]
-      except Exception as e:
-        # Find all observation entries
-        pattern = r'"(Observation \d+)":\s*"(.+?)"(?=,|\s*$)'
-        matches = re.findall(pattern, observations_text, re.DOTALL)
-      # Combine key and value into a single string per item
-      observations = []
-      if matches:
-        count=0
-        pattern = re.compile(r'^\s*((?:\d+)?\.)\s*(.*)$')
-        for value in matches:
-          m = pattern.match(value)
-          if m:
-            prefix, sentence = m.groups()
+  try:
+    print("-----compress observations------")
+    if len(master_obj["observations"]) > 5:
+      data = await compress_observations(master_obj["observations"])
+      matches=None
+      if data and "response" in data:
+        observations_text = data["response"]
+        try:
+          obj = json.loads(observations_text)
+          observations_output=obj["output"]
+          matches = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', observations_output.strip(), re.DOTALL)
+          matches = [obs.strip() for obs in matches if obs.strip()]
+        except Exception as e:
+          # Find all observation entries
+          pattern = r'"(Observation \d+)":\s*"(.+?)"(?=,|\s*$)'
+          matches = re.findall(pattern, observations_text, re.DOTALL)
+        # Combine key and value into a single string per item
+        observations = []
+        if matches:
+          count=0
+          pattern = re.compile(r'^\s*((?:\d+)?\.)\s*(.*)$')
+          for value in matches:
+            m = pattern.match(value)
+            if m:
+              prefix, sentence = m.groups()
+            else:
+              # no bullet found → treat entire line as sentence
+              prefix, sentence = None, value.strip()
+            if sentence:
+              count +=1
+              observations.append(f"{count}: {sentence}")
+          print(f"summarised observations: {len(observations)}")
+          master_obj["observations"] = observations
+      else:
+        raise Exception(f"observations data is NULL. {data}")
+  except Exception as e:
+    print(f"❌ DEBUG: {e}")
+
+  try:
+    print("-----compress planning------")
+    if len(master_obj["planning"]) > 5:
+      matches=None
+      data = await compress_planning(master_obj["planning"])
+      if data and "response" in data:
+        planning_text = data["response"]
+        try:
+          obj = json.loads(planning_text)
+          pattern=obj["output"]
+          pattern = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', pattern.strip(), re.DOTALL)
+          matches = [obs.strip() for obs in pattern if obs.strip()]        
+        except Exception as e:
+          # Find all observation entries
+          pattern = r'"(Planning \d+)":\s*"(.+?)"(?=,|\s*$)'
+          matches = re.findall(pattern, planning_text, re.DOTALL)
+        # Combine key and value into a single string per item
+        # master_obj["planning"] = [f"{key}: {value.replace('\\\'', '\'')}" for key, value in matches]
+        if matches:
+          planning=[]
+          count=0
+          pattern = re.compile(r'^\s*((?:\d+)?\.)\s*(.*)$')
+          for value in matches:
+            m = pattern.match(value)
+            if m:
+              prefix, sentence = m.groups()
+            else:
+              # no bullet found → treat entire line as sentence
+              prefix, sentence = None, value.strip()
+            if sentence:
+              count +=1
+              planning.append(f"{count}: {sentence}")
+          print(f"summarised planning: {len(planning)}")
+          master_obj["planning"] = planning
+      else:
+        raise Exception(f"planning data is NULL {data}.")
+  except Exception as e:
+    print(f"❌ DEBUG: {e}")      
+
+  try:
+    print("-----compress security_events------")
+    if "security_events" in master_obj and len(master_obj["security_events"]) > 0:
+      formatted_events = [
+                          f"ID#{event['id']}: {event['reasoning']}"
+                          for event in master_obj["security_events"]
+                          ]
+      data = await compress_security_events(formatted_events)
+      if data and "response" in data:
+        events_text = data["response"]
+        try:
+          obj = json.loads(events_text)
+          events_text=obj["output"]
+          # Extract all ID numbers
+          id_numbers = re.findall(r'ID#(\d+)', events_text)
+          if id_numbers and len(id_numbers) > 0:
+            # Convert to integers (optional)
+            id_numbers = [int(i) for i in id_numbers]
+            # Filter events where id is in id_numbers
+            matching_events = [event for event in master_obj["security_events"] if event["id"] in id_numbers]
+            master_obj["security_events"] = matching_events
           else:
-            # no bullet found → treat entire line as sentence
-            prefix, sentence = None, value.strip()
-          if sentence:
-            count +=1
-            observations.append(f"{count}: {sentence}")
-        print(f"summarised observations: {len(observations)}")
-        master_obj["observations"] = observations
+            raise Exception(f"ERROR: {events_text}")
+        except Exception as e:
+          print(f"Security events could not be compresses. {e}")
+      else:
+        raise Exception(f"security_events data is NULL. {data}")
+  except Exception as e:
+    print(f"❌ DEBUG: {e}")
 
-  print("-----compress planning------")
-  if len(master_obj["planning"]) > 5:
-    matches=None
-    data = await compress_planning(master_obj["planning"])
-    if data and "response" in data:
-      planning_text = data["response"]
-      try:
-        obj = json.loads(planning_text)
-        pattern=obj["output"]
-        pattern = re.findall(r'(?:\d+\.\s*)?(.*?)(?=\n\n\d+\.|\n\d+\.|\n\n|\n|\Z)', pattern.strip(), re.DOTALL)
-        matches = [obs.strip() for obs in pattern if obs.strip()]        
-      except Exception as e:
-        # Find all observation entries
-        pattern = r'"(Planning \d+)":\s*"(.+?)"(?=,|\s*$)'
-        matches = re.findall(pattern, planning_text, re.DOTALL)
-      # Combine key and value into a single string per item
-      # master_obj["planning"] = [f"{key}: {value.replace('\\\'', '\'')}" for key, value in matches]
-      if matches:
-        planning=[]
-        count=0
-        pattern = re.compile(r'^\s*((?:\d+)?\.)\s*(.*)$')
-        for value in matches:
-          m = pattern.match(value)
-          if m:
-            prefix, sentence = m.groups()
+  try:
+    print("-----compress hw_failure_events------")
+    if "hardware_failure_events" in master_obj and len(master_obj["hardware_failure_events"]) > 0:
+      formatted_events = [
+                          f"ID#{event['id']}: {event['reasoning']}"
+                          for event in master_obj["hardware_failure_events"]
+                          ]
+      data = await compress_hardware_failure_events(formatted_events)
+      if data and "response" in data:
+        events_text = data["response"]
+        try:
+          obj = json.loads(events_text)
+          events_text=obj["output"]
+          # Extract all ID numbers
+          id_numbers = re.findall(r'ID#(\d+)', events_text)
+          if id_numbers and len(id_numbers) > 0:
+            # Convert to integers (optional)
+            id_numbers = [int(i) for i in id_numbers]
+            # Filter events where id is in id_numbers
+            matching_events = [event for event in master_obj["hardware_failure_events"] if event["id"] in id_numbers]
+            master_obj["hardware_failure_events"] = matching_events
           else:
-            # no bullet found → treat entire line as sentence
-            prefix, sentence = None, value.strip()
-          if sentence:
-            count +=1
-            planning.append(f"{count}: {sentence}")
-        print(f"summarised planning: {len(planning)}")
-        master_obj["planning"] = planning
-      
-  print("-----compress security_events------")
-  if "security_events" in master_obj and len(master_obj["security_events"]) > 0:
-    formatted_events = [
-                        f"ID#{event['id']}: {event['reasoning']}"
-                        for event in master_obj["security_events"]
-                        ]
-    data = await compress_security_events(formatted_events)
-    if data and "response" in data:
-      events_text = data["response"]
-      try:
-        obj = json.loads(events_text)
-        events_text=obj["output"]
-        # Extract all ID numbers
-        id_numbers = re.findall(r'ID#(\d+)', events_text)
-        if id_numbers and len(id_numbers) > 0:
-          # Convert to integers (optional)
-          id_numbers = [int(i) for i in id_numbers]
-          # Filter events where id is in id_numbers
-          matching_events = [event for event in master_obj["security_events"] if event["id"] in id_numbers]
-          master_obj["security_events"] = matching_events
-        else:
-          raise Exception(f"ERROR: {events_text}")
-      except Exception as e:
-        print(f"Security events could not be compresses. {e}")
-
-  print("-----compress hw_failure_events------")
-  if "hardware_failure_events" in master_obj and len(master_obj["hardware_failure_events"]) > 0:
-    formatted_events = [
-                        f"ID#{event['id']}: {event['reasoning']}"
-                        for event in master_obj["hardware_failure_events"]
-                        ]
-    data = await compress_hardware_failure_events(formatted_events)
-    if data and "response" in data:
-      events_text = data["response"]
-      try:
-        obj = json.loads(events_text)
-        events_text=obj["output"]
-        # Extract all ID numbers
-        id_numbers = re.findall(r'ID#(\d+)', events_text)
-        if id_numbers and len(id_numbers) > 0:
-          # Convert to integers (optional)
-          id_numbers = [int(i) for i in id_numbers]
-          # Filter events where id is in id_numbers
-          matching_events = [event for event in master_obj["hardware_failure_events"] if event["id"] in id_numbers]
-          master_obj["hardware_failure_events"] = matching_events
-        else:
-          raise Exception(f"ERROR: {events_text}")
-      except Exception as e:
-        print(f"HW failure events could not be compresses. {e}")
+            raise Exception(f"ERROR: {events_text}")
+        except Exception as e:
+          print(f"HW failure events could not be compresses. {e}")
+      else:
+        raise Exception(f"hardware_failure_events data is NULL. {data}")
+  except Exception as e:
+    print(f"❌ DEBUG: {e}")
 
     
 # Function to check if the new item is unique

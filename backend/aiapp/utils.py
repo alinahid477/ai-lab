@@ -198,16 +198,16 @@ def get_json_from_file(filepath):
     thefile=None
     if os.path.dirname(filepath):
         thefile=filepath
-        send_to_websocket_sync(f"load data from json: {filepath}")  # Full path includes directory
+        send_to_websocket_sync({"type": "terminalinfo", "data": f"load data from json: {filepath}"})  # Full path includes directory
     else:
         # if only filename is given assume that file is in /tmp/logs dir
         os.path.join("/tmp/logs",filepath)
-        send_to_websocket_sync(f"load data from json: {thefile}")
+        send_to_websocket_sync({"type": "terminalinfo", "data": f"load data from json: {thefile}"})
     with open(filepath, 'r') as json_file:
       data = json.load(json_file)
       return data
   except Exception as e:
-    send_to_websocket_sync(f"EXCEPTION: executing get_json_from_file({filepath}): ${e}")
+    send_to_websocket_sync({"type": "terminalinfo", "data": f"EXCEPTION: executing get_json_from_file({filepath}): ${e}"})
 
 
 if __name__ == '__main__':

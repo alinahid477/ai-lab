@@ -18,10 +18,13 @@ spec:
         - name: myquaycred
       containers:
       - name: proxy-app
-        image: quay.io/rh-ee-anahid/ailab-proxy-server:v7
+        image: quay.io/rh-ee-anahid/ailab-proxy-server:v13
         ports:
-        - containerPort: 8080
+        - containerPort: 8000
         - containerPort: 8765
+        envFrom:
+            - configMapRef:
+                name: intellilog-envvars
 ---
 apiVersion: v1
 kind: Service
@@ -33,8 +36,8 @@ spec:
     app: proxy-app
   ports:
   - protocol: TCP
-    port: 80
-    targetPort: 8080
+    port: 8000
+    targetPort: 8000
     name: httpproxy
   - protocol: TCP
     port: 8765

@@ -1,4 +1,4 @@
-from flask import Flask, request, Response
+from flask import Flask, request, Response, make_response
 from flask_cors import CORS
 import requests
 import asyncio
@@ -8,12 +8,63 @@ from urllib.parse import urlencode
 import os
 app = Flask(__name__)
 
-allowed_origins = os.getenv("PROXY_ALLOWED_ORIGINS", "").split(",")
-CORS(app, origins=allowed_origins)
+# allowed_origins = os.getenv("PROXY_ALLOWED_ORIGINS", "").split(",")
+# CORS(app, origins=allowed_origins)
+
+def get_cors_origins():
+    origins_str = os.getenv("PROXY_ALLOWED_ORIGINS", "")
+    
+    if not origins_str:
+        # Default origins for development if no env var is set
+        if os.getenv("FLASK_ENV") == "development":
+            origins = ["http://localhost:3000", "http://127.0.0.1:3000"]
+        else:
+            origins = []  # No origins allowed if not specified in production
+    else:
+        origins = [origin.strip() for origin in origins_str.split(",") if origin.strip()]
+    
+    return origins
+
+
+# Alternative: More comprehensive configuration
+def configure_cors():
+    origins = get_cors_origins()
+    
+    # CORS(app, 
+    #      origins=origins,
+    #      supports_credentials=True,
+    #      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'])
+    print(f"CORS: {origins}")
+    is_turn_off_cors = os.getenv("PROXY_TURN_OFF_CORS", "False").lower() == "true"
+    if is_turn_off_cors:
+        print("CORS tunned OFF")
+        CORS(app)
+    else:
+        print("CORS tunned ON")
+        CORS(app, 
+            origins=origins)
+
+# configure_cors()
+
+# @app.before_request
+# def handle_preflight():
+#     if request.method == "OPTIONS":
+#         origin = request.headers.get('Origin')
+#         allowed_origins = get_cors_origins()
+        
+#         if origin in allowed_origins:
+#             response = make_response()
+#             response.headers.add("Access-Control-Allow-Origin", origin)
+#             response.headers.add('Access-Control-Allow-Headers', "Content-Type,Authorization")
+#             response.headers.add('Access-Control-Allow-Methods', "GET,PUT,POST,DELETE,OPTIONS")
+#             response.headers.add('Access-Control-Allow-Credentials', 'true')
+#             return response
+
 # Optional health check route
 @app.route("/")
 def healthz():
-    return "HTTP+WebSocket proxy is running"
+    origins_str = os.getenv("PROXY_ALLOWED_ORIGINS", "")
+    return f"HTTP+WebSocket proxy is running for origins {origins_str}"
 
 
 # === HTTP Proxy Logic ===
@@ -68,9 +119,9 @@ def run_ws_proxy():
             await asyncio.gather(client_to_backend(), backend_to_client())
 
     async def start_ws_proxy():
-        print("start_ws_proxy...\n")
         wsport=int(os.getenv("PROXY_WS_PORT", "8765"))
         wshost=(os.getenv("PROXY_WW_HOST", "0.0.0.0"))
+        print(f"start_ws_proxy @ {wshost}:{wsport}...\n")
         async with websockets.serve(handler, wshost, wsport):
             await asyncio.Future()  # Run forever
 
@@ -82,8 +133,9 @@ if __name__ == "__main__":
     print("starting WS proxy...\n")
     # Start WebSocket proxy in a background thread
     threading.Thread(target=run_ws_proxy, daemon=True).start()
-    print("starting HTTP proxy...\n")
+    
     webport=int(os.getenv("PROXY_WEB_PORT", "8000"))
     webhost=(os.getenv("PROXY_WEB_HOST", "0.0.0.0"))
     # Start Flask HTTP server
+    print(f"starting HTTP proxy {webhost}:{webport}...\n")
     app.run(host=webhost, port=webport)

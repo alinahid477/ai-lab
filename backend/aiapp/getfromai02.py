@@ -12,7 +12,7 @@ import os
 import pandas as pd
 from sentence_transformers import SentenceTransformer
 
-LOG_SUMMARY_MAX_TOKENS=15000
+LOG_SUMMARY_MAX_TOKENS=int(os.getenv("LOG_SUMMARY_MAX_TOKENS", "15000"))
 
 
 
@@ -67,7 +67,7 @@ async def get_intended_command(english_command):
 async def summarize_logs(logs_csv_file_path, summarize_file):
   
 
-  await send_message_to_ws("LOGS SUMMARIZE START")
+  await send_message_to_ws(f"LOGS SUMMARIZE START (logs token chunk size ~{LOG_SUMMARY_MAX_TOKENS})")
 
   # Initialize the embedding model
   embedding_model = SentenceTransformer('all-MiniLM-L6-v2')

@@ -6,7 +6,7 @@ import getfromai02
 from helpers import merge_log_summarization
 import os
 import server
-
+from helpers import utils as helperutils
 async def send_message_to_ws(message):
   print(f"**sending to ws: {message}")
   try:
@@ -85,4 +85,9 @@ if __name__ == "__main__":
   # print (summarize_file)
   # data = utils.get_json_from_file("/tmp/logs/sample-summarise-response.json")
   # print(data)
-  asyncio.run(testCSVLogs())
+  # asyncio.run(testCSVLogs())
+
+  conversation_history = [{"role": "system", "content": "You are a helpful assistant."}]
+  conversation_history.append({"role": "user", "content": prompt})
+  tokecount = helperutils.estimate_tokens(conversation_history)
+  print(tokecount)
